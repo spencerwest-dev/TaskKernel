@@ -1,0 +1,8 @@
+Git Workflow (Team)
+
+- Work on feature branches (no direct commits to main)
+- Branch naming: feature/<name>-<task>
+- Commit small, descriptive changes
+- Open a PR (pull request) for review
+- Require at least 1 teammate approval
+- Use squash merge when merging PRs

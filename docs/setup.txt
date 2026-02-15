@@ -1,0 +1,17 @@
+TaskKernel Setup (Team)
+
+Required installs:
+- Git
+- Node.js (LTS)
+- Java JDK 17
+- VS Code
+
+Verify:
+- git --version
+- node -v
+- npm -v
+- java -version
+
+Running locally:
+- Frontend: TBD (after React is created)
+- Backend: TBD (after Spring Boot is created)

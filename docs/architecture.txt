@@ -1,0 +1,9 @@
+Architecture (Planned)
+
+Pattern: Layered Architecture
+
+Frontend (React) -> Backend API (Spring Boot) -> Services (business logic) -> Database (PostgreSQL)
+
+Notes:
+- Backend owns rules for XP/levels/streaks to keep logic consistent
+- One completion per goal per day will be enforced with a unique constraint
