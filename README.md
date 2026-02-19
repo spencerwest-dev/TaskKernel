@@ -17,13 +17,6 @@ TaskKernel is a gamified progress tracker web app for students and everyday user
 - Database: PostgreSQL
 - Deployment: Vercel (frontend), Render (backend)
 
-## Repository Structure
-
-- frontend/ –> React user interface  
-- backend/ –> Server/API (future development)  
-- docs/ –> Sprint notes and class artifacts
-
-
 ## Roadmap
 
 **Phase 1 (MVP):**
@@ -45,14 +38,30 @@ TaskKernel is a gamified progress tracker web app for students and everyday user
 - Mobile responsive layout
 - Better visualizations
 
+## Repository Structure
+
+- frontend/ –> React user interface  
+- backend/ –> Server/API (future development)  
+- docs/ –> Sprint notes and class artifacts
+
 ## How to Run
 
-> This project is under active development. Setup steps will be finalized once the frontend and backend scaffolding are in place.
+> This project is under active development. Frontend setup is available now; backend setup will be added in a future sprint.
 
-1. Install prerequisites: Git, Node.js (LTS), and Java 17.
-2. Clone the repo.
-3. Run the frontend (instructions TBD).
-4. Run the backend (instructions TBD).
+### Prerequisites
+- Git
+- Node.js (LTS) + npm
+- Java 17 *(backend planned)*
+
+### Frontend
+
+Run the React development server locally:
+
+- git clone https://github.com/spencerwest-dev/TaskKernel.git
+- cd TaskKernel
+- cd frontend
+- npm install
+- npm start
 
 ## Authors
 
