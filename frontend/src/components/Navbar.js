@@ -13,7 +13,7 @@ function Navbar() {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, marginRight: 20 }}>TasKernel</h2>
+        <h2 style={{ margin: 0, marginRight: 20 }}>TaskKernel</h2>
         <ul
           style={{
             listStyle: 'none',
