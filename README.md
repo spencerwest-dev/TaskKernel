@@ -17,6 +17,13 @@ TaskKernel is a gamified progress tracker web app for students and everyday user
 - Database: PostgreSQL
 - Deployment: Vercel (frontend), Render (backend)
 
+## Repository Structure
+
+- frontend/ –> React user interface  
+- backend/ –> Server/API (future development)  
+- docs/ –> Sprint notes and class artifacts
+
+
 ## Roadmap
 
 **Phase 1 (MVP):**
