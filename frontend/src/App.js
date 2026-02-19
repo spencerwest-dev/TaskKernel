@@ -1,9 +1,11 @@
 import "./App.css";
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <div>
-      <h1>TaskKernel</h1>
+      <Navbar />
+      <h1>TasKernel</h1>
     </div>
   );
 }
