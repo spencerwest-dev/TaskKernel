@@ -1,13 +1,10 @@
 import "./App.css";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import LandingPage from "./pages/landing";
 
 function App() {
   return (
     <div>
-      <Navbar />
-      <h1>TaskKernel</h1>
-      <Footer />
+      <LandingPage />
     </div>
   );
 }
