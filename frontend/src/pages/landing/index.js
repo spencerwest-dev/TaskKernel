@@ -1,15 +1,7 @@
 import React from "react";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import TaskDashboard from "./components/TaskDashboard";
 
-const LandingPage = () => {
-  return (
-    <div>
-      <Navbar />
-      <Footer />
-    </div>
-  );
-};
-
-export default LandingPage;
+export default function LandingPage() {
+  return <TaskDashboard />;
+}
 

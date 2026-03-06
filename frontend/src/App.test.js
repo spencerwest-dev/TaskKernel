@@ -1,21 +1,23 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import App from "./App";
 
-describe('App Component', () => {
-  test('renders without crashing', () => {
+describe("App Component", () => {
+  test("renders without crashing", () => {
     render(<App />);
     // App should render without throwing an error
     expect(document.body).toBeInTheDocument();
   });
 
-  test('includes LandingPage component', () => {
+  test("renders task dashboard header", () => {
     render(<App />);
-    // The LandingPage should contain Navbar and Footer
-    const navbar = screen.getByRole('navigation');
-    const footer = screen.getByRole('contentinfo');
-    expect(navbar).toBeInTheDocument();
-    expect(footer).toBeInTheDocument();
+    expect(screen.getByText(/add task/i)).toBeInTheDocument();
+    expect(screen.getByText(/daily tasks/i)).toBeInTheDocument();
   });
 
+  test("includes navbar and footer", () => {
+    render(<App />);
+    expect(screen.getByRole("navigation")).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+  });
 });
