@@ -1,34 +1,18 @@
-import React from 'react';
+import React from "react";
 
 function Navbar() {
   return (
-    <nav
-      style={{
-        backgroundColor: '#333',
-        padding: '10px 20px',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, marginRight: 20 }}>TaskKernel</h2>
-        <ul
-          style={{
-            listStyle: 'none',
-            display: 'flex',
-            margin: 0,
-            padding: 0,
-            gap: '14px',
-            color: 'white',
-          }}
-        >
-          <li>Dashboard / Home</li>
-          <li>Tasks / To-Do List</li>
-          <li>Progress / Stats</li>
-          <li>Profile / Settings</li>
-        </ul>
+    <nav className="border-b border-slate-800 bg-slate-900 text-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-3">
+        <div className="flex items-center gap-5">
+          <h2 className="text-sm font-extrabold tracking-wide">TaskKernel</h2>
+          <ul className="hidden items-center gap-4 text-xs text-slate-200 md:flex">
+            <li className="hover:text-white">Dashboard</li>
+            <li className="hover:text-white">Tasks</li>
+            <li className="hover:text-white">Progress</li>
+            <li className="hover:text-white">Profile</li>
+          </ul>
+        </div>
       </div>
     </nav>
   );
