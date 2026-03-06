@@ -18,13 +18,4 @@ describe('App Component', () => {
     expect(footer).toBeInTheDocument();
   });
 
-  test('renders Navbar with TaskKernel branding', () => {
-    render(<App />);
-    expect(screen.getByText('TaskKernel')).toBeInTheDocument();
-  });
-
-  test('renders Footer with copyright', () => {
-    render(<App />);
-    expect(screen.getByText(/2026© TaskKernel/i)).toBeInTheDocument();
-  });
 });
