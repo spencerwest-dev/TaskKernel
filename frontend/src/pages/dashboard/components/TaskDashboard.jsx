@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import DashboardLayout from "../../../components/DashboardLayout";
-import TaskColumn from "../../../components/TaskColumn";
+import DashboardLayout from "./DashboardLayout";
+import TaskColumn from "./TaskColumn";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
@@ -190,4 +190,3 @@ export default function TaskDashboard() {
     </div>
   );
 }
-

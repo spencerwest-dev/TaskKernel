@@ -8,5 +8,4 @@ describe('Footer Component', () => {
     const footer = screen.getByRole('contentinfo');
     expect(footer).toBeInTheDocument();
   });
-
 });
