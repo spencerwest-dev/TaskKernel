@@ -25,7 +25,7 @@ export default function Navbar() {
             href="#get-started"
             className="text-[#653D15] font-medium no-underline hover:opacity-80"
           >
-            Get Started
+            Get Started (IF YOU ARE SEEING THIS THE TEST WORKED)
           </a>
           <a
             href="#learn-more"
