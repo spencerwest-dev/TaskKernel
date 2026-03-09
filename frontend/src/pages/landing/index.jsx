@@ -39,7 +39,7 @@ function LandingPage() {
               <br />
               progression with
               <br />
-              TaskKernel.
+              TaskKernel. (And have fun doing it!)
             </h1>
             <p className="text-[#E9A319] font-bold text-[36px] mt-4 whitespace-nowrap">
               Make getting things done easy.
