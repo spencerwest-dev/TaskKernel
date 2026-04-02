@@ -35,9 +35,9 @@ This project uses GitHub Actions for continuous integration and Netlify for cont
 
 **Phase 1 (MVP):**
 
-- Login / registration
-- Create / edit / delete tasks
-- Daily completion checkboxes
+- ~Login / registration~
+- ~Create / edit / delete tasks~
+- ~Daily completion checkboxes~
 - Weekly calendar view
 - Basic progression (XP per completion)
 
@@ -63,23 +63,43 @@ This project uses GitHub Actions for continuous integration and Netlify for cont
 
 ## How to Run
 
-> This project is under active development. Frontend setup is available now; backend setup will be added in a future sprint.
-
 ### Prerequisites
 
 - Git
 - Node.js (LTS) + npm
 - Java 17 _(backend planned)_
 
-### Frontend
+### Setup Instructions
 
-Run the React development server locally:
+> Clone the repository:
 
-- git clone https://github.com/spencerwest-dev/TaskKernel.git
-- cd TaskKernel
-- cd frontend
-- npm install
-- npm start
+&emsp; git clone https://github.com/spencerwest-dev/TaskKernel.git
+
+> Navigate to the frontend:
+
+&emsp; cd TaskKernel/frontend
+
+> Install dependencies:
+
+&emsp; npm install
+
+> Run the development server:
+
+&emsp; npm start
+
+## Unit Testing
+
+Unit tests are used to verify that core frontend functionality works as expected.
+
+### Running Unit Tests
+
+Navigate to the frontend folder and run:
+
+cd frontend
+npm install
+npm test
+
+This will execute the Jest test suite and display pass/fail results in the terminal.
 
 ## Authors
 
