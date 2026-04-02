@@ -50,7 +50,7 @@ function LandingPage() {
           <div className="w-full lg:w-1/2 flex justify-center lg:justify-center">
             <div className="w-full max-w-[550px] flex flex-col">
               <h2 className="text-[#653D15] font-bold text-[40px] text-center mb-6">
-                Sign Up, It&apos;s Free?
+                Sign Up, It&apos;s Free!
               </h2>
 
               <div className="flex flex-col gap-3">
