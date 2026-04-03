@@ -1,6 +1,7 @@
 
 // passwordValidator.test.jsx
 // To run ONLY these tests (recommended):
+//   ENSURE YOU HAVE SEEN README, node.js must be installed
 //   1. Clone the repo: git clone https://github.com/spencerwest-dev/TaskKernel.git
 //   2. Navigate to the frontend folder: cd TaskKernel/frontend
 //   3. Install dependencies: npm install
