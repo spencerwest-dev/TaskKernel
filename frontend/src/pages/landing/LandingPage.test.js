@@ -4,7 +4,7 @@
 // 2. Clone the repo: git clone https://github.com/spencerwest-dev/TaskKernel.git
 // 3. Navigate to the frontend folder: cd TaskKernel/frontend
 // 4. Install dependencies: npm install
-// 5. Run tests: npm test -- --watchAll=false
+// 5. Run these tests only: npm test -- --watchAll=false --testPathPattern=LandingPage
 
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
