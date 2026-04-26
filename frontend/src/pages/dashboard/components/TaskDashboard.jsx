@@ -134,12 +134,13 @@ export default function TaskDashboard() {
       .filter((t) => matchesTab(t, weeklyTab));
   }, [tasks, query, weeklyTab]);
 
-  function toggleTask(id) {//contains logic for distributing xp
+  function toggleTask(id) {
   const task = tasks.find((t) => t.id === id);
 
   if (task && !task.completed && !task.xpClaimed) {
-    setXp((prevXp) => prevXp + (task.xp || 10));
-    setXpWarning("");
+    const result = addXp(xp, task.xp || 10);
+    setXp(result.xp);
+    setXpWarning(""); // clear warning
   } else if (task && !task.completed && task.xpClaimed) {
     setXpWarning("You can't earn XP again from this task.");
   }
