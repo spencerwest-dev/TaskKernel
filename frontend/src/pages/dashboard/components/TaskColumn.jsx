@@ -16,6 +16,21 @@ export default function TaskColumn({
   onToggleTask,
   className,
 }) {
+
+   const filteredTasks = tasks.filter((task) => {
+    if (activeTab === "All") return true;
+    if (activeTab === "Weak") return task.strength === "weak";
+    if (activeTab === "Strong") return task.strength === "strong";
+    if (activeTab === "Completed") return task.completed === true;
+    return true;
+  });
+
+  const orderedTasks = [...filteredTasks].sort((a, b) => {
+    if (a.priority === b.priority) return 0;
+    return a.priority ? -1 : 1;
+  });
+
+
   return (
     <section
       className={cn(
@@ -58,12 +73,12 @@ export default function TaskColumn({
 
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
         <div className="space-y-3">
-          {tasks.length === 0 ? (
+          {orderedTasks.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
               No tasks match this filter.
             </div>
           ) : (
-            tasks.map((task) => (
+           orderedTasks.map((task) => (
               <TaskCard key={task.id} task={task} onToggle={onToggleTask} />
             ))
           )}
