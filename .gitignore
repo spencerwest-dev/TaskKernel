@@ -19,3 +19,5 @@ build/
 target/
 *.class
 *.log
+
+backend/src/main/resources/application-local.properties
