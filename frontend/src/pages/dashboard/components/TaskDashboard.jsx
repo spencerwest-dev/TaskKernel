@@ -3,6 +3,8 @@ import DashboardLayout from "./DashboardLayout";
 import TaskColumn from "./TaskColumn";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import XpBar from "./XpBar";
+import { addXp } from "./xpSystem";
 
 function normalizeTab(tab) {
   return String(tab || "All");
@@ -61,6 +63,7 @@ const initialTasks = [
     streak: 12,
     xp: 10,
     completed: true,
+    xpClaimed: true,
   },
   {
     id: "d-4",
@@ -105,6 +108,7 @@ const initialTasks = [
     streak: 7,
     xp: 18,
     completed: true,
+    xpClaimed: true,
   },
 ];
 
@@ -113,6 +117,8 @@ export default function TaskDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
   const [dailyTab, setDailyTab] = useState("All");
   const [weeklyTab, setWeeklyTab] = useState("All");
+  const [xp, setXp] = useState(0);//XP SYSTEM
+  const [xpWarning, setXpWarning] = useState("");//XP SYSTEM
 
   const dailyTasks = useMemo(() => {
     return tasks
@@ -129,10 +135,28 @@ export default function TaskDashboard() {
   }, [tasks, query, weeklyTab]);
 
   function toggleTask(id) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+  const task = tasks.find((t) => t.id === id);
+
+  if (task && !task.completed && !task.xpClaimed) {
+    const result = addXp(xp, task.xp || 10);
+    setXp(result.xp);
+    setXpWarning(""); // clear warning
+  } else if (task && !task.completed && task.xpClaimed) {
+    setXpWarning("You can't earn XP again from this task.");
   }
+
+  setTasks((prev) =>
+    prev.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            completed: !t.completed,
+            xpClaimed: t.xpClaimed || !t.completed,
+          }
+        : t
+    )
+  );
+}
 
   function addTask() {
     const id = `d-${Date.now()}`;
@@ -163,6 +187,14 @@ export default function TaskDashboard() {
             onOpenFilters={() => {}}
             onAddTask={addTask}
           >
+          <div className="mb-6">
+            <XpBar xp={xp} />
+            {xpWarning && (
+    <p className="mt-2 text-sm font-medium text-red-600">
+            {xpWarning}
+    </p>
+            )}
+    </div>
             <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-2">
               <TaskColumn
                 title="Daily Tasks"
