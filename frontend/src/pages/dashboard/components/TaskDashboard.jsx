@@ -3,6 +3,7 @@ import DashboardLayout from "./DashboardLayout";
 import TaskColumn from "./TaskColumn";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import AchievementTracker from "./AchievementTracker";
 
 function normalizeTab(tab) {
   return String(tab || "All");
@@ -163,6 +164,7 @@ export default function TaskDashboard() {
             onOpenFilters={() => {}}
             onAddTask={addTask}
           >
+            <AchievementTracker />
             <div className="grid h-full min-h-0 grid-cols-1 gap-6 lg:grid-cols-2">
               <TaskColumn
                 title="Daily Tasks"
