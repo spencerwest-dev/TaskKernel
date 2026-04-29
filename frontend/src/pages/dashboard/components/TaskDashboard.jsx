@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import DashboardLayout from "./DashboardLayout";
 import TaskColumn from "./TaskColumn";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import XpBar from "./XpBar";
 import { addXp } from "./xpSystem";
+import { useUserProfile } from "../../../hooks/useUserProfile";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 import { ReactComponent as XPIcon } from "../../../assets/Icons/xp_icon.svg";
@@ -120,8 +121,18 @@ export default function TaskDashboard() {
   const [tasks, setTasks] = useState(initialTasks);
   const [dailyTab, setDailyTab] = useState("All");
   const [weeklyTab, setWeeklyTab] = useState("All");
-  const [xp, setXp] = useState(0);//XP SYSTEM
-  const [xpWarning, setXpWarning] = useState("");//XP SYSTEM
+  const [xp, setXp] = useState(0);
+  const [xpWarning, setXpWarning] = useState("");
+
+  // Pull real xp/level/streak from the backend
+  const { profile, loading: profileLoading } = useUserProfile();
+
+  // Once the profile loads, seed xp from the backend value
+  useEffect(() => {
+    if (profile?.xp != null) {
+      setXp(profile.xp);
+    }
+  }, [profile]);
 
   const dailyTasks = useMemo(() => {
     return tasks
@@ -138,31 +149,34 @@ export default function TaskDashboard() {
   }, [tasks, query, weeklyTab]);
 
   function toggleTask(id) {
-  const task = tasks.find((t) => t.id === id);
+    const task = tasks.find((t) => t.id === id);
 
-  if (task && !task.completed && !task.xpClaimed) {
-    const result = addXp(xp, task.xp || 10);
-    setXp(result.xp);
-    setXpWarning(""); // clear warning
-  } else if (task && !task.completed && task.xpClaimed) {
-    setXpWarning("You can't earn XP again from this task.");
+    if (task && !task.completed && !task.xpClaimed) {
+      const result = addXp(xp, task.xp || 10);
+      setXp(result.xp);
+      setXpWarning("");
+    } else if (task && !task.completed && task.xpClaimed) {
+      setXpWarning("You can't earn XP again from this task.");
+    }
+
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id
+          ? {
+              ...t,
+              completed: !t.completed,
+              xpClaimed: t.xpClaimed || !t.completed,
+            }
+          : t
+      )
+    );
   }
-
-  setTasks((prev) =>
-    prev.map((t) =>
-      t.id === id
-        ? {
-            ...t,
-            completed: !t.completed,
-            xpClaimed: t.xpClaimed || !t.completed,
-          }
-        : t
-    )
-  );
-}
 
   const doneToday = tasks.filter((t) => t.completed).length;
   const topStreak = tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
+
+  // Use backend streak if available, otherwise derive from tasks
+  const displayStreak = profile?.streak ?? topStreak;
 
   function addTask() {
     const id = `d-${Date.now()}`;
@@ -193,31 +207,33 @@ export default function TaskDashboard() {
             onOpenFilters={() => {}}
             onAddTask={addTask}
           >
-          <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
-            <XpBar xp={xp} />
-            <div className="flex gap-2">
-              <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                <p className="text-xl font-extrabold leading-none text-[#653d15]">{topStreak}</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
-                <StreakIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
+            <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
+              <XpBar xp={xp} />
+              <div className="flex gap-2">
+                <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                  <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                    {profileLoading ? "—" : displayStreak}
+                  </p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
+                  <StreakIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
+                </div>
+                <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                  <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                    {profileLoading ? "—" : xp}
+                  </p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Total XP</p>
+                  <XPIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
+                </div>
+                <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                  <p className="text-xl font-extrabold leading-none text-[#653d15]">{doneToday}</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Done</p>
+                  <DoneIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
+                </div>
               </div>
-              <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                <p className="text-xl font-extrabold leading-none text-[#653d15]">{xp}</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Total XP</p>
-                <XPIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
-              </div>
-              <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                <p className="text-xl font-extrabold leading-none text-[#653d15]">{doneToday}</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Done</p>
-                <DoneIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
-              </div>
+              {xpWarning && (
+                <p className="mt-2 text-sm font-medium text-red-600">{xpWarning}</p>
+              )}
             </div>
-            {xpWarning && (
-    <p className="mt-2 text-sm font-medium text-red-600">
-            {xpWarning}
-    </p>
-            )}
-    </div>
             <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
               <TaskColumn
                 title="Daily Tasks"
