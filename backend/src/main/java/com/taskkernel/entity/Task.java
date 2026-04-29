@@ -33,7 +33,7 @@ public class Task {
     @Column(nullable = false)
     private String strength;
 
-    @Column(nullable = false)
+    @Transient
     private boolean completed = false;
 
     public Task() {}
