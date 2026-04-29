@@ -5,6 +5,9 @@ export default function Header({
   onQueryChange,
   onOpenFilters,
   onAddTask,
+  xp = 0,
+  level = 1,
+  streak = 0,
 }) {
   return (
     <header className="border-b-2 border-[#dbb96a] bg-[#f0ddb8]">
@@ -34,6 +37,21 @@ export default function Header({
             placeholder="Search tasks…"
             className="w-full min-w-0 bg-transparent text-sm font-medium text-[#653d15] placeholder:text-[#b08040] focus:outline-none"
           />
+        </div>
+
+        <div className="hidden items-center gap-2 lg:flex">
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+            <p className="text-sm font-extrabold leading-none text-[#653d15]">{level}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Level</p>
+          </div>
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+            <p className="text-sm font-extrabold leading-none text-[#653d15]">{xp}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">XP</p>
+          </div>
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+            <p className="text-sm font-extrabold leading-none text-[#653d15]">{streak}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
+          </div>
         </div>
 
         <button
