@@ -2,17 +2,26 @@ import React from "react";
 
 function Navbar() {
   return (
-    <nav className="border-b border-slate-800 bg-slate-900 text-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-3">
-        <div className="flex items-center gap-5">
-          <h2 className="text-sm font-extrabold tracking-wide">TaskKernel</h2>
-          <ul className="hidden items-center gap-4 text-xs text-slate-200 md:flex">
-            <li className="hover:text-white">Dashboard</li>
-            <li className="hover:text-white">Tasks</li>
-            <li className="hover:text-white">Progress</li>
-            <li className="hover:text-white">Profile</li>
-          </ul>
+    <nav className="bg-[#653d15] text-[#fdf6e3]">
+      <div className="mx-auto flex h-[52px] max-w-7xl items-center justify-between gap-4 px-5 md:px-7">
+        <div className="flex items-center gap-2.5">
+          <img
+            src={`${process.env.PUBLIC_URL || ""}/TKlogo.svg`}
+            alt="TaskKernel"
+            width={34}
+            height={34}
+            className="h-[34px] w-[34px] flex-none"
+          />
+          <span className="text-[20px] font-bold leading-none tracking-tight">
+            TaskKernel
+          </span>
         </div>
+        <button
+          type="button"
+          className="rounded-full border border-[#e9a319]/35 bg-[#e9a319]/20 px-4 py-1.5 text-xs font-semibold text-[#f5e0b0] transition hover:bg-[#e9a319]/35 hover:text-[#fdf6e3]"
+        >
+          Log out
+        </button>
       </div>
     </nav>
   );

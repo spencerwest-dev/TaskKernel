@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskKernel Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background: #fdf6e3; color: #653d15; min-height: 100vh; }
+
+    .top-nav {
+      background: #653d15; padding: 0 28px; height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .top-nav-brand { display: flex; align-items: center; gap: 10px; }
+    .top-nav-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+    .top-nav-brand span { color: #fdf6e3; font-weight: 800; font-size: 20px; letter-spacing: -0.3px; }
+    .logout-btn {
+      background: rgba(233,163,25,0.18); color: #f5e0b0;
+      border: 1px solid rgba(233,163,25,0.35); padding: 5px 16px; border-radius: 20px;
+      font-size: 12px; font-family: 'Poppins', sans-serif; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .logout-btn:hover { background: rgba(233,163,25,0.32); color: #fdf6e3; }
+
+    .account-header {
+      background: #f0ddb8; border-bottom: 2px solid #dbb96a;
+      padding: 16px 28px; display: flex; align-items: center; gap: 22px;
+    }
+    .char-avatar {
+      width: 62px; height: 62px; border-radius: 14px;
+      background: #653d15; border: 3px solid #e9a319;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; flex-shrink: 0;
+    }
+    .account-info { flex: 1; }
+    .level-badge { color: #653d15; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .level-badge span { color: #c47e0a; }
+    .bars { display: flex; flex-direction: column; gap: 6px; }
+    .bar-row { display: flex; align-items: center; gap: 9px; }
+    .bar-label { font-size: 12px; color: #7a4d1a; width: 18px; }
+    .bar-track { height: 10px; border-radius: 20px; background: #ddb96a; flex: 1; max-width: 200px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 20px; transition: width 0.5s cubic-bezier(.4,0,.2,1); }
+    .bar-fill.xp { background: #e9a319; }
+    .bar-fill.hp { background: #c0392b; }
+    .bar-val { font-size: 11px; color: #7a4d1a; font-weight: 600; }
+    .account-stats { display: flex; gap: 10px; margin-left: auto; }
+    .stat-box {
+      text-align: center; background: #fdf6e3;
+      border: 2px solid #dbb96a; border-radius: 12px; padding: 9px 18px;
+    }
+    .stat-box .val { color: #653d15; font-weight: 800; font-size: 22px; line-height: 1; }
+    .stat-box .lbl { color: #9a6530; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 3px; }
+
+    .dashboard-body { padding: 20px 28px; max-width: 1120px; margin: 0 auto; }
+    .task-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .search-box {
+      flex: 1; display: flex; align-items: center; gap: 8px;
+      background: #f0ddb8; border: 2px solid #dbb96a; border-radius: 22px;
+      padding: 8px 16px; transition: all 0.15s;
+    }
+    .search-box:focus-within { border-color: #e9a319; background: #fdf6e3; }
+    .search-box input {
+      border: none; outline: none; font-size: 13px; font-family: 'Poppins', sans-serif;
+      color: #653d15; background: transparent; width: 100%; font-weight: 500;
+    }
+    .search-box input::placeholder { color: #b08040; }
+    .btn-add {
+      background: #653d15; color: #fdf6e3; border: none;
+      padding: 10px 22px; border-radius: 22px; font-size: 13px;
+      font-family: 'Poppins', sans-serif; font-weight: 700; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-add:hover { background: #4a2c0e; }
+
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .task-col { background: #f5e9cc; border-radius: 18px; border: 2px solid #dbb96a; overflow: hidden; }
+    .col-header {
+      background: #653d15; padding: 13px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .col-header h3 { color: #fdf6e3; font-size: 15px; font-weight: 800; }
+    .col-header .count {
+      background: #e9a319; color: #653d15; font-size: 11px;
+      font-weight: 800; border-radius: 20px; padding: 2px 10px;
+    }
+    .col-tabs {
+      display: flex; border-bottom: 2px solid #dbb96a;
+      padding: 0 14px; background: #f0ddb8;
+    }
+    .col-tabs button {
+      background: none; border: none; border-bottom: 3px solid transparent;
+      padding: 9px 10px; font-size: 12px; font-family: 'Poppins', sans-serif;
+      color: #9a6530; cursor: pointer; transition: all 0.15s;
+      margin-bottom: -2px; font-weight: 600;
+    }
+    .col-tabs button.active { color: #653d15; border-bottom-color: #e9a319; }
+    .col-tabs button:hover { color: #653d15; }
+
+    .task-list { padding: 12px; display: flex; flex-direction: column; gap: 9px; min-height: 180px; }
+
+    .task-card {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #fdf6e3; border: 2px solid #dbb96a; border-radius: 14px;
+      padding: 11px 13px; transition: all 0.15s; cursor: pointer;
+    }
+    .task-card:hover { border-color: #e9a319; box-shadow: 0 3px 12px rgba(101,61,21,0.1); transform: translateY(-1px); }
+    .task-card.completed { opacity: 0.5; background: #f5e9cc; }
+
+    .check-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; transition: all 0.15s; font-family: 'Poppins', sans-serif;
+    }
+    .check-btn.strong { background: #653d15; color: #fdf6e3; }
+    .check-btn.weak { background: #e9a319; color: #653d15; }
+    .check-btn.done { background: #27ae60; color: white; }
+    .check-btn:hover { transform: scale(1.1); }
+
+    .task-meta { flex: 1; min-width: 0; }
+    .task-title { font-size: 13px; font-weight: 700; color: #653d15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-card.completed .task-title { text-decoration: line-through; color: #9a6530; }
+    .task-desc { font-size: 11px; color: #9a6530; margin-top: 2px; font-weight: 500; }
+    .task-badges { display: flex; gap: 5px; margin-top: 6px; align-items: center; }
+    .badge { font-size: 10px; padding: 2px 9px; border-radius: 20px; font-weight: 700; font-family: 'Poppins', sans-serif; }
+    .badge.strong { background: #653d15; color: #fdf6e3; }
+    .badge.weak { background: #e9a319; color: #653d15; }
+    .badge.xp { background: #dbb96a; color: #653d15; }
+    .task-right { text-align: right; flex-shrink: 0; }
+    .streak { font-size: 12px; color: #9a6530; font-weight: 700; }
+    .streak span { color: #c47e0a; }
+    .empty-state { text-align: center; padding: 32px 16px; color: #b08040; font-size: 13px; font-weight: 600; }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(59,31,10,0.45); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fdf6e3; border-radius: 22px; padding: 28px;
+      width: 380px; border: 3px solid #e9a319;
+    }
+    .modal-box h3 { color: #653d15; font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+    .modal-box input, .modal-box select {
+      width: 100%; padding: 10px 14px; border: 2px solid #dbb96a;
+      border-radius: 14px; font-size: 13px; font-family: 'Poppins', sans-serif;
+      font-weight: 500; color: #653d15; margin-bottom: 11px; outline: none; background: #f5e9cc;
+    }
+    .modal-box input:focus, .modal-box select:focus { border-color: #e9a319; background: #fdf6e3; }
+    .modal-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 6px; }
+    .btn-cancel {
+      background: #f0ddb8; color: #653d15; border: 2px solid #dbb96a;
+      padding: 8px 18px; border-radius: 14px; font-size: 13px;
+      font-family: 'Poppins', sans-serif; font-weight: 700; cursor: pointer;
+    }
+    .btn-save {
+      background: #653d15; color: #fdf6e3; border: none;
+      padding: 8px 20px; border-radius: 14px; font-size: 13px;
+      font-family: 'Poppins', sans-serif; font-weight: 700; cursor: pointer;
+    }
+    .btn-save:hover { background: #4a2c0e; }
+  </style>
+</head>
+<body>
+
+<div class="top-nav">
+  <div class="top-nav-brand">
+    <div class="top-nav-icon">
+      <svg width="32" height="34" viewBox="0 0 32 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- bucket -->
+        <path d="M7 15 L9 32 L23 32 L25 15 Z" fill="#e9a319" stroke="#c47e0a" stroke-width="1.2"/>
+        <path d="M7 15 L25 15" stroke="#c47e0a" stroke-width="1.2"/>
+        <!-- stripe on bucket -->
+        <path d="M11 15 L12.5 32" stroke="#c47e0a" stroke-width="0.8" opacity="0.5"/>
+        <path d="M21 15 L19.5 32" stroke="#c47e0a" stroke-width="0.8" opacity="0.5"/>
+        <!-- kernels top row -->
+        <ellipse cx="12" cy="12" rx="4.5" ry="4" fill="#fdf6e3" stroke="#dbb96a" stroke-width="1"/>
+        <ellipse cx="20" cy="12" rx="4.5" ry="4" fill="#fdf6e3" stroke="#dbb96a" stroke-width="1"/>
+        <!-- kernel middle -->
+        <ellipse cx="16" cy="9" rx="4.5" ry="4" fill="#fdf6e3" stroke="#dbb96a" stroke-width="1"/>
+        <!-- kernel peaks -->
+        <ellipse cx="8" cy="9" rx="3.5" ry="3" fill="#fdf6e3" stroke="#dbb96a" stroke-width="1"/>
+        <ellipse cx="24" cy="9" rx="3.5" ry="3" fill="#fdf6e3" stroke="#dbb96a" stroke-width="1"/>
+      </svg>
+    </div>
+    <span>TaskKernel</span>
+  </div>
+  <button class="logout-btn">Log out</button>
+</div>
+
+<div class="account-header">
+  <div class="char-avatar">
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="13" r="7" fill="#dbb96a"/>
+      <path d="M4 34c0-7.732 6.268-14 14-14s14 6.268 14 14" fill="#dbb96a"/>
+    </svg>
+  </div>
+  <div class="account-info">
+    <div class="level-badge">Level <span>3</span> · Habit Warrior</div>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-label">❤️</span>
+        <div class="bar-track"><div class="bar-fill hp" style="width:74%"></div></div>
+        <span class="bar-val">74 / 100</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">⚡</span>
+        <div class="bar-track"><div class="bar-fill xp" id="xp-bar" style="width:38%"></div></div>
+        <span class="bar-val" id="xp-val">38 / 100</span>
+      </div>
+    </div>
+  </div>
+  <div class="account-stats">
+    <div class="stat-box">
+      <div class="val" id="stat-streak">5</div>
+      <div class="lbl">🔥 Streak</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-xp">38</div>
+      <div class="lbl">⚡ Total XP</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="stat-done">2</div>
+      <div class="lbl">✅ Done today</div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-body">
+  <div class="task-toolbar">
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#b08040" stroke-width="2.5"/><path d="M16.5 16.5L21 21" stroke="#b08040" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Search tasks…" oninput="filterTasks(this.value)"/>
+    </div>
+    <button class="btn-add" onclick="openModal()">+ Add Task</button>
+  </div>
+  <div class="columns">
+    <div class="task-col">
+      <div class="col-header">
+        <h3>Daily Tasks</h3>
+        <span class="count" id="daily-count">4</span>
+      </div>
+      <div class="col-tabs">
+        <button class="active" onclick="setTab('daily','All',this)">All</button>
+        <button onclick="setTab('daily','Weak',this)">Weak</button>
+        <button onclick="setTab('daily','Strong',this)">Strong</button>
+        <button onclick="setTab('daily','Completed',this)">Completed</button>
+      </div>
+      <div class="task-list" id="daily-list"></div>
+    </div>
+    <div class="task-col">
+      <div class="col-header">
+        <h3>Weekly Tasks</h3>
+        <span class="count" id="weekly-count">3</span>
+      </div>
+      <div class="col-tabs">
+        <button class="active" onclick="setTab('weekly','All',this)">All</button>
+        <button onclick="setTab('weekly','Weak',this)">Weak</button>
+        <button onclick="setTab('weekly','Strong',this)">Strong</button>
+        <button onclick="setTab('weekly','Completed',this)">Completed</button>
+      </div>
+      <div class="task-list" id="weekly-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <h3>Add New Task</h3>
+    <input type="text" id="new-title" placeholder="Task name"/>
+    <input type="text" id="new-desc" placeholder="Description (optional)"/>
+    <select id="new-type"><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
+    <select id="new-strength"><option value="strong">Strong</option><option value="weak">Weak</option></select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let tasks = [
+  {id:1,type:'daily',title:'Drink water',desc:'8 cups minimum',strength:'strong',streak:6,xp:8,completed:false},
+  {id:2,type:'daily',title:'20 min focused study',desc:'One Pomodoro, no distractions',strength:'weak',streak:1,xp:15,completed:false},
+  {id:3,type:'daily',title:'Stretch + posture reset',desc:'Neck/shoulders/hips',strength:'strong',streak:12,xp:10,completed:true},
+  {id:4,type:'daily',title:'Inbox zero (10 min)',desc:'Email + messages sweep',strength:'weak',streak:0,xp:12,completed:false},
+  {id:5,type:'weekly',title:'Plan the week',desc:'Top 3 outcomes + schedule',strength:'strong',streak:4,xp:25,completed:false},
+  {id:6,type:'weekly',title:'Deep clean workspace',desc:'Desk reset + file cleanup',strength:'weak',streak:0,xp:20,completed:false},
+  {id:7,type:'weekly',title:'Review progress',desc:'Wins, blockers, next tweaks',strength:'strong',streak:7,xp:18,completed:true},
+];
+let tabs={daily:'All',weekly:'All'}, searchQ='', totalXp=38;
+
+function render(){
+  ['daily','weekly'].forEach(type=>{
+    const list=document.getElementById(type+'-list');
+    let f=tasks.filter(t=>t.type===type);
+    if(searchQ) f=f.filter(t=>t.title.toLowerCase().includes(searchQ));
+    const tab=tabs[type];
+    if(tab==='Weak') f=f.filter(t=>t.strength==='weak'&&!t.completed);
+    if(tab==='Strong') f=f.filter(t=>t.strength==='strong'&&!t.completed);
+    if(tab==='Completed') f=f.filter(t=>t.completed);
+    document.getElementById(type+'-count').textContent=f.length;
+    if(!f.length){list.innerHTML='<div class="empty-state">No tasks here.</div>';return;}
+    list.innerHTML=f.map(t=>`
+      <div class="task-card ${t.completed?'completed':''}" onclick="toggle(${t.id})">
+        <button class="check-btn ${t.completed?'done':t.strength}" onclick="toggle(${t.id});event.stopPropagation()">${t.completed?'✓':'+'}</button>
+        <div class="task-meta">
+          <div class="task-title">${t.title}</div>
+          <div class="task-desc">${t.desc}</div>
+          <div class="task-badges">
+            <span class="badge ${t.strength}">${t.strength.charAt(0).toUpperCase()+t.strength.slice(1)}</span>
+            <span class="badge xp">+${t.xp} XP</span>
+          </div>
+        </div>
+        <div class="task-right"><div class="streak">🔥 <span>${t.streak}</span></div></div>
+      </div>`).join('');
+  });
+  document.getElementById('stat-done').textContent=tasks.filter(t=>t.completed).length;
+  document.getElementById('stat-xp').textContent=totalXp;
+  document.getElementById('xp-bar').style.width=Math.min(totalXp,100)+'%';
+  document.getElementById('xp-val').textContent=totalXp+' / 100';
+}
+function toggle(id){
+  const t=tasks.find(t=>t.id===id);
+  t.completed=!t.completed;
+  totalXp+=t.completed?t.xp:-t.xp;
+  t.streak+=t.completed?1:-1;
+  t.streak=Math.max(0,t.streak);
+  totalXp=Math.max(0,totalXp);
+  render();
+}
+function setTab(type,tab,btn){
+  tabs[type]=tab;
+  btn.closest('.col-tabs').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+function filterTasks(q){searchQ=q.toLowerCase();render();}
+function openModal(){document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function saveTask(){
+  const title=document.getElementById('new-title').value.trim();
+  if(!title)return;
+  tasks.unshift({id:Date.now(),type:document.getElementById('new-type').value,title,desc:document.getElementById('new-desc').value,strength:document.getElementById('new-strength').value,streak:0,xp:10,completed:false});
+  document.getElementById('new-title').value='';
+  document.getElementById('new-desc').value='';
+  closeModal();render();
+}
+render();
+</script>
+</body>
+</html>

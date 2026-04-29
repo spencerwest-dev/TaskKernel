@@ -1,4 +1,5 @@
 import React from "react";
+import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -7,15 +8,13 @@ function cn(...classes) {
 function strengthStyles(strength) {
   if (strength === "weak") {
     return {
-      ring: "ring-orange-500/20",
-      button: "bg-orange-500 hover:bg-orange-600",
-      chip: "bg-orange-50 text-orange-700 ring-1 ring-orange-600/20",
+      button: "bg-[#e9a319] text-[#653d15]",
+      chip: "bg-[#e9a319] text-[#653d15]",
     };
   }
   return {
-    ring: "ring-indigo-500/15",
-    button: "bg-indigo-600 hover:bg-indigo-700",
-    chip: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/20",
+    button: "bg-[#653d15] text-[#fdf6e3]",
+    chip: "bg-[#653d15] text-[#fdf6e3]",
   };
 }
 
@@ -26,10 +25,9 @@ export default function TaskCard({ task, onToggle }) {
   return (
     <div
       className={cn(
-        "group flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition",
-        "hover:-translate-y-0.5 hover:shadow-md",
-        completed && "opacity-70",
-        styles.ring && "ring-1 " + styles.ring
+        "group flex items-start gap-3 rounded-[14px] border-2 border-[#dbb96a] bg-[#fdf6e3] p-3 transition",
+        "hover:-translate-y-0.5 hover:border-[#e9a319] hover:shadow-[0_3px_12px_rgba(101,61,21,0.1)]",
+        completed && "bg-[#f5e9cc] opacity-60"
       )}
     >
       <button
@@ -37,8 +35,8 @@ export default function TaskCard({ task, onToggle }) {
         onClick={() => onToggle?.(task.id)}
         aria-label={completed ? "Mark incomplete" : "Mark complete"}
         className={cn(
-          "mt-0.5 inline-flex h-10 w-10 flex-none items-center justify-center rounded-full text-white shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/40",
-          completed ? "bg-emerald-600 hover:bg-emerald-700" : styles.button
+          "mt-0.5 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full text-base font-extrabold shadow-sm transition hover:scale-105",
+          completed ? "bg-[#27ae60] text-white" : styles.button
         )}
       >
         {completed ? (
@@ -67,35 +65,36 @@ export default function TaskCard({ task, onToggle }) {
             <p
               className={cn(
                 "truncate text-sm font-semibold",
-                completed ? "line-through text-slate-500" : "text-slate-900"
+                completed ? "line-through text-[#9a6530]" : "text-[#653d15]"
               )}
               title={task.title}
             >
               {task.title}
             </p>
             {task.description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">
+              <p className="mt-0.5 line-clamp-2 text-xs text-[#9a6530]">
                 {task.description}
               </p>
             ) : null}
           </div>
 
-          <div className="flex flex-none flex-col items-end gap-1 text-xs text-slate-600">
-            <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
-              🔥 {task.streak ?? 0}
+          <div className="flex flex-none flex-col items-end gap-1 text-xs font-bold text-[#9a6530]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#f5e9cc] px-2 py-0.5">
+              <StreakIcon className="h-4 w-4 text-[#9a6530]" />
+              <span>{task.streak ?? 0}</span>
             </span>
-            <span className="rounded-full bg-slate-50 px-2 py-0.5 ring-1 ring-slate-200">
+            <span className="rounded-full bg-[#f5e9cc] px-2 py-0.5">
               {task.frequency}
             </span>
           </div>
         </div>
 
         <div className="mt-2 flex items-center gap-2">
-          <span className={cn("rounded-full px-2 py-0.5 text-[11px]", styles.chip)}>
+          <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", styles.chip)}>
             {task.strength === "weak" ? "Weak" : "Strong"}
           </span>
           {task.xp ? (
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 ring-1 ring-emerald-600/20">
+            <span className="rounded-full bg-[#dbb96a] px-2.5 py-0.5 text-[10px] font-bold text-[#653d15]">
               +{task.xp} XP
             </span>
           ) : null}
