@@ -9,6 +9,7 @@ import { useUserProfile } from "../../../hooks/useUserProfile";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 import { ReactComponent as XPIcon } from "../../../assets/Icons/xp_icon.svg";
+import WeeklyCalendarView from "./WeeklyCalendarView";
 
 function normalizeTab(tab) {
   return String(tab || "All");
@@ -254,6 +255,7 @@ export default function TaskDashboard() {
                 className="min-h-0"
               />
             </div>
+            <WeeklyCalendarView tasks={tasks} />
           </DashboardLayout>
         </div>
       </div>
