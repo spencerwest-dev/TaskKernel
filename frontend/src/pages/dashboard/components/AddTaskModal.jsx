@@ -7,14 +7,44 @@ const initialFormState = {
   strength: "weak",
 };
 
+// Rate limiting constants (in milliseconds)
+const TASK_CREATION_COOLDOWN = 2000; // 2 seconds between task creations
+
 export default function AddTaskModal({ open, onClose, onCreate }) {
   const [form, setForm] = useState(initialFormState);
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   useEffect(() => {
     if (open) {
       setForm(initialFormState);
+      // Check if still in cooldown when modal opens
+      const lastCreationTime = localStorage.getItem("lastTaskCreationTime");
+      if (lastCreationTime) {
+        const timeSinceLastCreation = Date.now() - parseInt(lastCreationTime);
+        if (timeSinceLastCreation < TASK_CREATION_COOLDOWN) {
+          const remaining = Math.ceil((TASK_CREATION_COOLDOWN - timeSinceLastCreation) / 1000);
+          setIsOnCooldown(true);
+          setCooldownRemaining(remaining);
+        }
+      }
     }
   }, [open]);
+
+  // Handle cooldown countdown timer
+  useEffect(() => {
+    if (!isOnCooldown || cooldownRemaining <= 0) {
+      setIsOnCooldown(false);
+      setCooldownRemaining(0);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCooldownRemaining((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isOnCooldown, cooldownRemaining]);
 
   if (!open) {
     return null;
@@ -26,9 +56,20 @@ export default function AddTaskModal({ open, onClose, onCreate }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    
+    // Prevent submission during cooldown
+    if (isOnCooldown) {
+      return;
+    }
+    
     if (!form.title.trim()) {
       return;
     }
+
+    // Record task creation time for rate limiting
+    localStorage.setItem("lastTaskCreationTime", Date.now().toString());
+    setIsOnCooldown(true);
+    setCooldownRemaining(2);
 
     onCreate?.({
       title: form.title.trim(),
@@ -115,9 +156,11 @@ export default function AddTaskModal({ open, onClose, onCreate }) {
             </button>
             <button
               type="submit"
-              className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700"
+              disabled={isOnCooldown}
+              className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-indigo-500"
+              title={isOnCooldown ? `Wait ${cooldownRemaining}s before creating another task` : "Create a new task"}
             >
-              Create Task
+              {isOnCooldown ? `Wait ${cooldownRemaining}s` : "Create Task"}
             </button>
           </div>
         </form>
