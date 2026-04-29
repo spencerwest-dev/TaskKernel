@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children,
 }) {
   return (
-    <div className="h-full bg-gradient-to-b from-slate-50 to-indigo-50/40 text-slate-900">
+    <div className="h-full bg-[#fdf6e3] text-[#653d15]">
       <div className="flex h-full flex-col">
         <Header
           query={query}
@@ -19,7 +19,7 @@ export default function DashboardLayout({
         />
 
         <main className="flex-1 min-h-0">
-          <div className="mx-auto h-full max-w-6xl px-4 py-6">{children}</div>
+          <div className="mx-auto h-full max-w-7xl px-5 py-5 md:px-7">{children}</div>
         </main>
       </div>
     </div>
