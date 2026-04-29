@@ -34,23 +34,18 @@ export default function TaskColumn({
   return (
     <section
       className={cn(
-        "flex min-h-0 flex-col rounded-3xl border border-slate-200/70 bg-white/70 p-4 shadow-sm backdrop-blur",
+        "flex min-h-0 flex-col overflow-hidden rounded-[18px] border-2 border-[#dbb96a] bg-[#f5e9cc]",
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          {subtitle ? (
-            <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>
-          ) : null}
-        </div>
-        <span className="inline-flex h-7 items-center rounded-full bg-slate-900 px-2.5 text-xs font-semibold text-white">
+      <div className="flex items-center justify-between gap-3 bg-[#653d15] px-4 py-3">
+        <h2 className="text-[15px] font-extrabold text-[#fdf6e3]">{title}</h2>
+        <span className="inline-flex items-center rounded-full bg-[#e9a319] px-2.5 py-0.5 text-[11px] font-extrabold text-[#653d15]">
           {tasks.length}
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1 border-b-2 border-[#dbb96a] bg-[#f0ddb8] px-3.5">
         {TABS.map((tab) => {
           const selected = tab === activeTab;
           return (
@@ -59,10 +54,10 @@ export default function TaskColumn({
               type="button"
               onClick={() => onTabChange?.(tab)}
               className={cn(
-                "rounded-full px-3 py-1 text-xs font-semibold transition",
+                "border-b-[3px] border-transparent px-2.5 py-2 text-xs font-semibold text-[#9a6530] transition",
                 selected
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  ? "border-[#e9a319] text-[#653d15]"
+                  : "hover:text-[#653d15]"
               )}
             >
               {tab}
@@ -71,10 +66,10 @@ export default function TaskColumn({
         })}
       </div>
 
-      <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
         <div className="space-y-3">
           {orderedTasks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border-2 border-dashed border-[#dbb96a] bg-[#fdf6e3] px-4 py-6 text-center text-sm font-semibold text-[#b08040]">
               No tasks match this filter.
             </div>
           ) : (
