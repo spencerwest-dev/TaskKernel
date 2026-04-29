@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 
 function cn(...classes) {
@@ -19,8 +20,53 @@ function strengthStyles(strength) {
 }
 
 export default function TaskCard({ task, onToggle }) {
+  const { getToken } = useAuth();
+  
   const styles = strengthStyles(task.strength);
   const completed = Boolean(task.completed);
+  const [isSaving, setIsSaving] = useState(false);
+ 
+
+  const apiBaseUrl =
+    process.env.REACT_APP_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
+
+  async function handleToggle() {
+    if (isSaving) return;
+    const nextCompleted = !completed;
+
+    setIsSaving(true);
+    try {
+      const token = await getToken?.();
+      if (!token) {
+        // Preserve local toggle behavior if auth is not ready yet.
+        onToggle?.(task.id, { completed: nextCompleted });
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/tasks/${task.id}/complete`, {
+        method: nextCompleted ? "POST" : "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Unable to update task completion (${response.status}).`);
+      }
+
+      const payload = await response.json();
+      onToggle?.(task.id, {
+        completed: nextCompleted,
+        user: payload?.user,
+      });
+    } catch (error) {
+      console.error("Task completion update failed:", error);
+      // Keep button responsive during API issues while you wire backend IDs.
+      onToggle?.(task.id, { completed: nextCompleted });
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div
@@ -32,11 +78,13 @@ export default function TaskCard({ task, onToggle }) {
     >
       <button
         type="button"
-        onClick={() => onToggle?.(task.id)}
+        onClick={handleToggle}
+        disabled={isSaving}
         aria-label={completed ? "Mark incomplete" : "Mark complete"}
         className={cn(
           "mt-0.5 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full text-base font-extrabold shadow-sm transition hover:scale-105",
-          completed ? "bg-[#27ae60] text-white" : styles.button
+          completed ? "bg-[#27ae60] text-white" : styles.button,
+          isSaving && "cursor-not-allowed opacity-70"
         )}
       >
         {completed ? (
