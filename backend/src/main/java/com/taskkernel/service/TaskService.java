@@ -1,6 +1,10 @@
-package com.taskkernel;
+package com.taskkernel.service;
 
+import com.taskkernel.entity.Task;
+import com.taskkernel.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -23,26 +27,25 @@ public class TaskService {
 
     public Task updateTask(Long taskId, Task updated, String clerkUserId) {
         Task existing = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
         if (!existing.getUserId().equals(clerkUserId)) {
-            throw new RuntimeException("Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());
         existing.setType(updated.getType());
         existing.setStrength(updated.getStrength());
-        existing.setFrequency(updated.getFrequency());
         return taskRepository.save(existing);
     }
 
     public void deleteTask(Long taskId, String clerkUserId) {
         Task existing = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
         if (!existing.getUserId().equals(clerkUserId)) {
-            throw new RuntimeException("Forbidden");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
         taskRepository.delete(existing);
