@@ -30,8 +30,12 @@ function matchesQuery(task, query) {
     .toLowerCase();
   if (!q) return true;
   return (
-    String(task.title || "").toLowerCase().includes(q) ||
-    String(task.description || "").toLowerCase().includes(q)
+    String(task.title || "")
+      .toLowerCase()
+      .includes(q) ||
+    String(task.description || "")
+      .toLowerCase()
+      .includes(q)
   );
 }
 
@@ -62,7 +66,7 @@ export default function TaskDashboard() {
       setError("");
       try {
         const token = await getToken();
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/tasks`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -120,8 +124,8 @@ export default function TaskDashboard() {
               completed: !t.completed,
               xpClaimed: t.xpClaimed || !t.completed,
             }
-          : t
-      )
+          : t,
+      ),
     );
   }
 
@@ -135,7 +139,7 @@ export default function TaskDashboard() {
     setError("");
     try {
       const token = await getToken();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,12 +163,15 @@ export default function TaskDashboard() {
     setError("");
     try {
       const token = await getToken();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/tasks/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete task.");
@@ -194,27 +201,43 @@ export default function TaskDashboard() {
                   <p className="text-xl font-extrabold leading-none text-[#653d15]">
                     {profileLoading ? "—" : displayStreak}
                   </p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                    Streak
+                  </p>
                   <StreakIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                 </div>
                 <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
                   <p className="text-xl font-extrabold leading-none text-[#653d15]">
                     {profileLoading ? "—" : xp}
                   </p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Total XP</p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                    Total XP
+                  </p>
                   <XPIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                 </div>
                 <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                  <p className="text-xl font-extrabold leading-none text-[#653d15]">{doneToday}</p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Done</p>
+                  <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                    {doneToday}
+                  </p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                    Done
+                  </p>
                   <DoneIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                 </div>
               </div>
               {xpWarning && (
-                <p className="mt-2 text-sm font-medium text-red-600">{xpWarning}</p>
+                <p className="mt-2 text-sm font-medium text-red-600">
+                  {xpWarning}
+                </p>
               )}
-              {loading && <p className="mt-2 text-sm font-medium text-[#9a6530]">Loading tasks...</p>}
-              {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
+              {loading && (
+                <p className="mt-2 text-sm font-medium text-[#9a6530]">
+                  Loading tasks...
+                </p>
+              )}
+              {error && (
+                <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+              )}
             </div>
             <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
               <TaskColumn
