@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import XpBar from "./XpBar";
 import { addXp } from "./xpSystem";
+import { useAuth } from "@clerk/clerk-react";
 import { useUserProfile } from "../../../hooks/useUserProfile";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
@@ -34,95 +35,16 @@ function matchesQuery(task, query) {
   );
 }
 
-const initialTasks = [
-  {
-    id: "d-1",
-    type: "daily",
-    title: "Drink water",
-    description: "8 cups minimum",
-    strength: "strong",
-    frequency: "Daily",
-    streak: 6,
-    xp: 8,
-    completed: false,
-  },
-  {
-    id: "d-2",
-    type: "daily",
-    title: "20 min focused study",
-    description: "One Pomodoro, no distractions",
-    strength: "weak",
-    frequency: "Daily",
-    streak: 1,
-    xp: 15,
-    completed: false,
-  },
-  {
-    id: "d-3",
-    type: "daily",
-    title: "Stretch + posture reset",
-    description: "Neck/shoulders/hips",
-    strength: "strong",
-    frequency: "Daily",
-    streak: 12,
-    xp: 10,
-    completed: true,
-    xpClaimed: true,
-  },
-  {
-    id: "d-4",
-    type: "daily",
-    title: "Inbox zero (10 min)",
-    description: "Email + messages sweep",
-    strength: "weak",
-    frequency: "Daily",
-    streak: 0,
-    xp: 12,
-    completed: false,
-  },
-  {
-    id: "w-1",
-    type: "weekly",
-    title: "Plan the week",
-    description: "Top 3 outcomes + schedule blocks",
-    strength: "strong",
-    frequency: "Weekly",
-    streak: 4,
-    xp: 25,
-    completed: false,
-  },
-  {
-    id: "w-2",
-    type: "weekly",
-    title: "Deep clean workspace",
-    description: "Desk reset + file cleanup",
-    strength: "weak",
-    frequency: "Weekly",
-    streak: 0,
-    xp: 20,
-    completed: false,
-  },
-  {
-    id: "w-3",
-    type: "weekly",
-    title: "Review progress",
-    description: "Wins, blockers, next tweaks",
-    strength: "strong",
-    frequency: "Weekly",
-    streak: 7,
-    xp: 18,
-    completed: true,
-    xpClaimed: true,
-  },
-];
-
 export default function TaskDashboard() {
+  const { getToken } = useAuth();
   const [query, setQuery] = useState("");
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]);
   const [dailyTab, setDailyTab] = useState("All");
   const [weeklyTab, setWeeklyTab] = useState("All");
   const [xp, setXp] = useState(0);
   const [xpWarning, setXpWarning] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Pull real xp/level/streak from the backend
   const { profile, loading: profileLoading } = useUserProfile();
@@ -133,6 +55,37 @@ export default function TaskDashboard() {
       setXp(profile.xp);
     }
   }, [profile]);
+
+  useEffect(() => {
+    async function fetchTasks() {
+      setLoading(true);
+      setError("");
+      try {
+        const token = await getToken();
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks.");
+        }
+
+        const data = await response.json();
+        setTasks(Array.isArray(data.tasks) ? data.tasks : []);
+        if (data.user?.xp != null) {
+          setXp(data.user.xp);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch tasks.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchTasks();
+  }, [getToken]);
 
   const dailyTasks = useMemo(() => {
     return tasks
@@ -178,22 +131,49 @@ export default function TaskDashboard() {
   // Use backend streak if available, otherwise derive from tasks
   const displayStreak = profile?.streak ?? topStreak;
 
-  function addTask() {
-    const id = `d-${Date.now()}`;
-    setTasks((prev) => [
-      {
-        id,
-        type: "daily",
-        title: "New task",
-        description: "Edit me later (API-backed soon)",
-        strength: "weak",
-        frequency: "Daily",
-        streak: 0,
-        xp: 10,
-        completed: false,
-      },
-      ...prev,
-    ]);
+  async function addTask({ title, description, type, strength }) {
+    setError("");
+    try {
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description, type, strength }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create task.");
+      }
+
+      const createdTask = await response.json();
+      setTasks((prev) => [...prev, createdTask]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create task.");
+    }
+  }
+
+  async function deleteTask(id) {
+    setError("");
+    try {
+      const token = await getToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/tasks/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task.");
+      }
+
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete task.");
+    }
   }
 
   return (
@@ -233,6 +213,8 @@ export default function TaskDashboard() {
               {xpWarning && (
                 <p className="mt-2 text-sm font-medium text-red-600">{xpWarning}</p>
               )}
+              {loading && <p className="mt-2 text-sm font-medium text-[#9a6530]">Loading tasks...</p>}
+              {error && <p className="mt-2 text-sm font-medium text-red-600">{error}</p>}
             </div>
             <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
               <TaskColumn
@@ -242,6 +224,7 @@ export default function TaskDashboard() {
                 activeTab={dailyTab}
                 onTabChange={setDailyTab}
                 onToggleTask={toggleTask}
+                onDeleteTask={deleteTask}
                 className="min-h-0"
               />
               <TaskColumn
@@ -251,6 +234,7 @@ export default function TaskDashboard() {
                 activeTab={weeklyTab}
                 onTabChange={setWeeklyTab}
                 onToggleTask={toggleTask}
+                onDeleteTask={deleteTask}
                 className="min-h-0"
               />
             </div>
