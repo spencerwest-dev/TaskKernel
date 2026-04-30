@@ -2,11 +2,11 @@ package com.taskkernel.controller;
 
 import java.util.Map;
 import com.taskkernel.entity.Task;
+import com.taskkernel.entity.User;
 import com.taskkernel.service.TaskService;
+import com.taskkernel.service.UserService;
 import com.taskkernel.util.ClerkAuthUtil;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,40 +16,42 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
-    private final ClerkAuthUtil clerkAuthUtil;
+    private final UserService userService;
 
-    public TaskController(TaskService taskService, ClerkAuthUtil clerkAuthUtil) {
+    public TaskController(TaskService taskService, UserService userService) {
         this.taskService = taskService;
-        this.clerkAuthUtil = clerkAuthUtil;
+        this.userService = userService;
     }
 
     @GetMapping
-public ResponseEntity<Map<String, Object>> getTasks(@AuthenticationPrincipal Jwt jwt) {
-    String userId = clerkAuthUtil.extractUserId(jwt);
+public ResponseEntity<Map<String, Object>> getTasks() {
+    String userId = ClerkAuthUtil.getCurrentUserId();
     List<Task> tasks = taskService.getTasksForUser(userId);
-    Map<String, Object> user = Map.of("xp", 0, "level", 1, "streak", 0);
+    User userRecord = userService.getOrCreateUser(userId);
+    Map<String, Object> user = Map.of(
+            "xp", userRecord.getXp(),
+            "level", userRecord.getLevel(),
+            "streak", userRecord.getStreak()
+    );
     return ResponseEntity.ok(Map.of("tasks", tasks, "user", user));
 }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.createTask(task, userId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id,
-                                           @RequestBody Task task,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+                                           @RequestBody Task task) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.updateTask(id, task, userId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable Long id,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+    public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable Long id) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         taskService.deleteTask(id, userId);
         return ResponseEntity.ok(Map.of("message", "deleted"));
     }
