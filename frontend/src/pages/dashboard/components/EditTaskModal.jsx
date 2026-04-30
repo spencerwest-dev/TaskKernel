@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 
+// Rate limiting constants (in milliseconds)
+const TASK_UPDATE_COOLDOWN = 2000; // 2 seconds between task updates
+
 export default function EditTaskModal({ open, task, onClose, onSave }) {
   const [form, setForm] = useState({
     title: "",
@@ -9,6 +12,8 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
   });
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   useEffect(() => {
     if (open && task) {
@@ -19,8 +24,34 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
         strength: task.strength || "weak",
       });
       setError("");
+      
+      // Check if still in cooldown when modal opens
+      const lastUpdateTime = localStorage.getItem("lastTaskUpdateTime");
+      if (lastUpdateTime) {
+        const timeSinceLastUpdate = Date.now() - parseInt(lastUpdateTime);
+        if (timeSinceLastUpdate < TASK_UPDATE_COOLDOWN) {
+          const remaining = Math.ceil((TASK_UPDATE_COOLDOWN - timeSinceLastUpdate) / 1000);
+          setIsOnCooldown(true);
+          setCooldownRemaining(remaining);
+        }
+      }
     }
   }, [open, task]);
+
+  // Handle cooldown countdown timer
+  useEffect(() => {
+    if (!isOnCooldown || cooldownRemaining <= 0) {
+      setIsOnCooldown(false);
+      setCooldownRemaining(0);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCooldownRemaining((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isOnCooldown, cooldownRemaining]);
 
   if (!open || !task) {
     return null;
@@ -32,6 +63,12 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Prevent submission during cooldown
+    if (isOnCooldown) {
+      return;
+    }
+    
     if (!form.title.trim()) {
       setError("Title is required.");
       return;
@@ -58,6 +95,11 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
       if (!response.ok) {
         throw new Error("Unable to save task.");
       }
+
+      // Record task update time for rate limiting
+      localStorage.setItem("lastTaskUpdateTime", Date.now().toString());
+      setIsOnCooldown(true);
+      setCooldownRemaining(2);
 
       const updatedTask = await response.json();
       onSave?.(updatedTask);
@@ -145,10 +187,11 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSaving || isOnCooldown}
+              className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-indigo-500"
+              title={isOnCooldown ? `Wait ${cooldownRemaining}s before saving again` : isSaving ? "Saving..." : "Save changes"}
             >
-              {isSaving ? "Saving…" : "Save Changes"}
+              {isOnCooldown ? `Wait ${cooldownRemaining}s` : isSaving ? "Saving…" : "Save Changes"}
             </button>
           </div>
         </form>

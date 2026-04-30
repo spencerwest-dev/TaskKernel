@@ -43,4 +43,15 @@ describe("Header", () => {
 
     expect(mockOnAddTask).toHaveBeenCalledTimes(1);
   });
+
+  test("renders passed xp, level, and streak values", () => {
+    render(<Header query="" xp={150} level={4} streak={12} />);
+
+    expect(screen.getByText("150")).toBeInTheDocument();
+    expect(screen.getByText("4")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("XP")).toBeInTheDocument();
+    expect(screen.getByText("Level")).toBeInTheDocument();
+    expect(screen.getByText("Streak")).toBeInTheDocument();
+  });
 });
