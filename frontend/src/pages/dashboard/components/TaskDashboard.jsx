@@ -5,7 +5,8 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import XpBar from "./XpBar";
 import EditTaskModal from "./EditTaskModal";
-import { addXp } from "./xpSystem";
+import AddTaskModal from "./AddTaskModal";
+import { addXp, getLevel } from "./xpSystem";
 import { useAuth } from "@clerk/clerk-react";
 import { useTasks } from "../../../hooks/useTasks";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
@@ -43,6 +44,7 @@ export default function TaskDashboard() {
   const [xp, setXp] = useState(0);
   const [xpWarning, setXpWarning] = useState("");
   const [editingTask, setEditingTask] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [error, setError] = useState("");
 
   const { tasks: apiTasks, profile, loading } = useTasks();
@@ -111,8 +113,9 @@ export default function TaskDashboard() {
 
   const doneToday = tasks.filter((t) => t.completed).length;
   const displayStreak = profile?.streak ?? tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
+  const displayLevel = getLevel(xp);
 
-  async function addTask({ title, description, type, strength }) {
+  async function handleCreateTask({ title, description, type, strength }) {
     setError("");
     try {
       const token = await getToken();
@@ -125,9 +128,7 @@ export default function TaskDashboard() {
         body: JSON.stringify({ title, description, type, strength }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create task.");
-      }
+      if (!response.ok) throw new Error("Failed to create task.");
 
       const createdTask = await response.json();
       setTasks((prev) => [createdTask, ...prev]);
@@ -145,7 +146,10 @@ export default function TaskDashboard() {
             query={query}
             onQueryChange={setQuery}
             onOpenFilters={() => {}}
-            onAddTask={addTask}
+            onAddTask={() => setAddModalOpen(true)}
+            xp={xp}
+            level={displayLevel}
+            streak={displayStreak}
           >
             {loading ? (
               <div className="flex items-center justify-center py-20 text-sm font-semibold text-[#9a6530]">
@@ -209,6 +213,12 @@ export default function TaskDashboard() {
         </div>
       </div>
       <Footer />
+
+      <AddTaskModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onCreate={handleCreateTask}
+      />
 
       <EditTaskModal
         open={editingTask !== null}
