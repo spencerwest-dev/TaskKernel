@@ -14,10 +14,11 @@ export default function TaskColumn({
   activeTab,
   onTabChange,
   onToggleTask,
+  onEditTask,
+  onDeleteTask,
   className,
 }) {
-
-   const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = tasks.filter((task) => {
     if (activeTab === "All") return true;
     if (activeTab === "Weak") return task.strength === "weak";
     if (activeTab === "Strong") return task.strength === "strong";
@@ -29,7 +30,6 @@ export default function TaskColumn({
     if (a.priority === b.priority) return 0;
     return a.priority ? -1 : 1;
   });
-
 
   return (
     <section
@@ -55,9 +55,7 @@ export default function TaskColumn({
               onClick={() => onTabChange?.(tab)}
               className={cn(
                 "border-b-[3px] border-transparent px-2.5 py-2 text-xs font-semibold text-[#9a6530] transition",
-                selected
-                  ? "border-[#e9a319] text-[#653d15]"
-                  : "hover:text-[#653d15]"
+                selected ? "border-[#e9a319] text-[#653d15]" : "hover:text-[#653d15]"
               )}
             >
               {tab}
@@ -73,8 +71,14 @@ export default function TaskColumn({
               No tasks match this filter.
             </div>
           ) : (
-           orderedTasks.map((task) => (
-              <TaskCard key={task.id} task={task} onToggle={onToggleTask} />
+            orderedTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onToggle={onToggleTask}
+                onEdit={onEditTask}
+                onDelete={onDeleteTask}
+              />
             ))
           )}
         </div>

@@ -4,6 +4,7 @@ import TaskColumn from "./TaskColumn";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import XpBar from "./XpBar";
+import EditTaskModal from "./EditTaskModal";
 import { addXp } from "./xpSystem";
 import { useTasks } from "../../../hooks/useTasks";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
@@ -24,9 +25,7 @@ function matchesTab(task, tab) {
 }
 
 function matchesQuery(task, query) {
-  const q = String(query || "")
-    .trim()
-    .toLowerCase();
+  const q = String(query || "").trim().toLowerCase();
   if (!q) return true;
   return (
     String(task.title || "").toLowerCase().includes(q) ||
@@ -41,18 +40,16 @@ export default function TaskDashboard() {
   const [weeklyTab, setWeeklyTab] = useState("All");
   const [xp, setXp] = useState(0);
   const [xpWarning, setXpWarning] = useState("");
+  const [editingTask, setEditingTask] = useState(null);
 
-  // Fetch real tasks + user profile from the backend
   const { tasks: apiTasks, profile, loading } = useTasks();
 
-  // Once tasks load, replace local state with real data
   useEffect(() => {
     if (apiTasks.length > 0) {
       setTasks(apiTasks);
     }
   }, [apiTasks]);
 
-  // Seed XP from backend profile
   useEffect(() => {
     if (profile?.xp != null) {
       setXp(profile.xp);
@@ -74,12 +71,10 @@ export default function TaskDashboard() {
   }, [tasks, query, weeklyTab]);
 
   function toggleTask(id, payload) {
-    // If we got real user data back from the API, update XP
     if (payload?.user?.xp != null) {
       setXp(payload.user.xp);
       setXpWarning("");
     } else {
-      // Fallback: local XP calculation
       const task = tasks.find((t) => t.id === id);
       if (task && !task.completed && !task.xpClaimed) {
         const result = addXp(xp, task.xp || 10);
@@ -94,14 +89,21 @@ export default function TaskDashboard() {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? {
-              ...t,
-              completed: nextCompleted,
-              xpClaimed: t.xpClaimed || nextCompleted,
-            }
+          ? { ...t, completed: nextCompleted, xpClaimed: t.xpClaimed || nextCompleted }
           : t
       )
     );
+  }
+
+  function handleEditSave(updatedTask) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t))
+    );
+    setEditingTask(null);
+  }
+
+  function handleDelete(id) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
   const doneToday = tasks.filter((t) => t.completed).length;
@@ -173,6 +175,8 @@ export default function TaskDashboard() {
                     activeTab={dailyTab}
                     onTabChange={setDailyTab}
                     onToggleTask={toggleTask}
+                    onEditTask={setEditingTask}
+                    onDeleteTask={handleDelete}
                     className="min-h-0"
                   />
                   <TaskColumn
@@ -182,6 +186,8 @@ export default function TaskDashboard() {
                     activeTab={weeklyTab}
                     onTabChange={setWeeklyTab}
                     onToggleTask={toggleTask}
+                    onEditTask={setEditingTask}
+                    onDeleteTask={handleDelete}
                     className="min-h-0"
                   />
                 </div>
@@ -191,6 +197,13 @@ export default function TaskDashboard() {
         </div>
       </div>
       <Footer />
+
+      <EditTaskModal
+        open={editingTask !== null}
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSave={handleEditSave}
+      />
     </div>
   );
 }
