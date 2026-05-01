@@ -43,7 +43,7 @@ export default function TaskDashboard() {
   const [xpWarning, setXpWarning] = useState("");
 
   // Fetch real tasks + user profile from the backend
-  const { tasks: apiTasks, profile, loading, refetch } = useTasks();
+  const { tasks: apiTasks, profile, loading } = useTasks();
 
   // Once tasks load, replace local state with real data
   useEffect(() => {
