@@ -19,13 +19,13 @@ function strengthStyles(strength) {
   };
 }
 
-export default function TaskCard({ task, onToggle }) {
+export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
   const { getToken } = useAuth();
-  
+
   const styles = strengthStyles(task.strength);
   const completed = Boolean(task.completed);
   const [isSaving, setIsSaving] = useState(false);
- 
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const apiBaseUrl =
     process.env.REACT_APP_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
@@ -38,7 +38,6 @@ export default function TaskCard({ task, onToggle }) {
     try {
       const token = await getToken?.();
       if (!token) {
-        // Preserve local toggle behavior if auth is not ready yet.
         onToggle?.(task.id, { completed: nextCompleted });
         return;
       }
@@ -61,10 +60,35 @@ export default function TaskCard({ task, onToggle }) {
       });
     } catch (error) {
       console.error("Task completion update failed:", error);
-      // Keep button responsive during API issues while you wire backend IDs.
       onToggle?.(task.id, { completed: nextCompleted });
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      const token = await getToken?.();
+      const response = await fetch(`${apiBaseUrl}/tasks/${task.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Unable to delete task (${response.status}).`);
+      }
+
+      onDelete?.(task.id);
+    } catch (error) {
+      console.error("Task delete failed:", error);
+      // Still remove locally if API fails
+      onDelete?.(task.id);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -88,19 +112,8 @@ export default function TaskCard({ task, onToggle }) {
         )}
       >
         {completed ? (
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="h-5 w-5"
-            fill="none"
-          >
-            <path
-              d="M20 7 10 17l-5-5"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+            <path d="M20 7 10 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (
           <span className="text-lg font-bold leading-none">+</span>
@@ -120,9 +133,7 @@ export default function TaskCard({ task, onToggle }) {
               {task.title}
             </p>
             {task.description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs text-[#9a6530]">
-                {task.description}
-              </p>
+              <p className="mt-0.5 line-clamp-2 text-xs text-[#9a6530]">{task.description}</p>
             ) : null}
           </div>
 
@@ -131,21 +142,42 @@ export default function TaskCard({ task, onToggle }) {
               <StreakIcon className="h-4 w-4 text-[#9a6530]" />
               <span>{task.streak ?? 0}</span>
             </span>
-            <span className="rounded-full bg-[#f5e9cc] px-2 py-0.5">
-              {task.frequency}
-            </span>
+            <span className="rounded-full bg-[#f5e9cc] px-2 py-0.5">{task.frequency}</span>
           </div>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", styles.chip)}>
-            {task.strength === "weak" ? "Weak" : "Strong"}
-          </span>
-          {task.xp ? (
-            <span className="rounded-full bg-[#dbb96a] px-2.5 py-0.5 text-[10px] font-bold text-[#653d15]">
-              +{task.xp} XP
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", styles.chip)}>
+              {task.strength === "weak" ? "Weak" : "Strong"}
             </span>
-          ) : null}
+            {task.xp ? (
+              <span className="rounded-full bg-[#dbb96a] px-2.5 py-0.5 text-[10px] font-bold text-[#653d15]">
+                +{task.xp} XP
+              </span>
+            ) : null}
+          </div>
+
+          {/* Edit + Delete buttons — visible on hover */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={() => onEdit?.(task)}
+              aria-label="Edit task"
+              className="rounded-full bg-[#f5e9cc] px-2 py-1 text-[10px] font-semibold text-[#653d15] hover:bg-[#dbb96a] transition"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              aria-label="Delete task"
+              className="rounded-full bg-[#f5e9cc] px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-100 transition disabled:opacity-50"
+            >
+              {isDeleting ? "..." : "Delete"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
