@@ -6,6 +6,7 @@ import Footer from "./Footer";
 import XpBar from "./XpBar";
 import EditTaskModal from "./EditTaskModal";
 import { addXp } from "./xpSystem";
+import { useAuth } from "@clerk/clerk-react";
 import { useTasks } from "../../../hooks/useTasks";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
@@ -34,6 +35,7 @@ function matchesQuery(task, query) {
 }
 
 export default function TaskDashboard() {
+  const { getToken } = useAuth();
   const [query, setQuery] = useState("");
   const [tasks, setTasks] = useState([]);
   const [dailyTab, setDailyTab] = useState("All");
@@ -41,6 +43,7 @@ export default function TaskDashboard() {
   const [xp, setXp] = useState(0);
   const [xpWarning, setXpWarning] = useState("");
   const [editingTask, setEditingTask] = useState(null);
+  const [error, setError] = useState("");
 
   const { tasks: apiTasks, profile, loading } = useTasks();
 
@@ -109,22 +112,28 @@ export default function TaskDashboard() {
   const doneToday = tasks.filter((t) => t.completed).length;
   const displayStreak = profile?.streak ?? tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
 
-  function addTask() {
-    const id = `d-${Date.now()}`;
-    setTasks((prev) => [
-      {
-        id,
-        type: "daily",
-        title: "New task",
-        description: "",
-        strength: "weak",
-        frequency: "Daily",
-        streak: 0,
-        xp: 10,
-        completed: false,
-      },
-      ...prev,
-    ]);
+  async function addTask({ title, description, type, strength }) {
+    setError("");
+    try {
+      const token = await getToken();
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:8080"}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description, type, strength }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create task.");
+      }
+
+      const createdTask = await response.json();
+      setTasks((prev) => [createdTask, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create task.");
+    }
   }
 
   return (
@@ -165,6 +174,9 @@ export default function TaskDashboard() {
                   </div>
                   {xpWarning && (
                     <p className="mt-2 text-sm font-medium text-red-600">{xpWarning}</p>
+                  )}
+                  {error && (
+                    <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
                   )}
                 </div>
                 <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
