@@ -24,17 +24,17 @@ public class TaskController {
     }
 
     @GetMapping
-public ResponseEntity<Map<String, Object>> getTasks() {
-    String userId = ClerkAuthUtil.getCurrentUserId();
-    List<Task> tasks = taskService.getTasksForUser(userId);
-    User userRecord = userService.getOrCreateUser(userId);
-    Map<String, Object> user = Map.of(
-            "xp", userRecord.getXp(),
-            "level", userRecord.getLevel(),
-            "streak", userRecord.getStreak()
-    );
-    return ResponseEntity.ok(Map.of("tasks", tasks, "user", user));
-}
+    public ResponseEntity<Map<String, Object>> getTasks() {
+        String userId = ClerkAuthUtil.getCurrentUserId();
+        List<Task> tasks = taskService.getTasksForUser(userId);
+        User userRecord = userService.getOrCreateUser(userId);
+        Map<String, Object> user = Map.of(
+                "xp", userRecord.getXp(),
+                "level", userRecord.getLevel(),
+                "streak", userRecord.getStreak()
+        );
+        return ResponseEntity.ok(Map.of("tasks", tasks, "user", user));
+    }
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
@@ -54,5 +54,44 @@ public ResponseEntity<Map<String, Object>> getTasks() {
         String userId = ClerkAuthUtil.getCurrentUserId();
         taskService.deleteTask(id, userId);
         return ResponseEntity.ok(Map.of("message", "deleted"));
+    }
+
+    // Mark task complete — awards XP only if not already claimed
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Map<String, Object>> completeTask(@PathVariable Long id) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
+        boolean wasXpClaimed = taskService.isXpClaimed(id, userId);
+        Task task = taskService.setCompleted(id, userId, true);
+        User user = wasXpClaimed
+                ? userService.getOrCreateUser(userId)
+                : userService.addXpForTask(userId, task);
+        return ResponseEntity.ok(Map.of(
+                "taskId", task.getId(),
+                "completed", true,
+                "xpClaimed", task.isXpClaimed(),
+                "user", Map.of(
+                        "xp", user.getXp(),
+                        "level", user.getLevel(),
+                        "streak", user.getStreak()
+                )
+        ));
+    }
+
+    // Unmark task complete — never removes XP
+    @DeleteMapping("/{id}/complete")
+    public ResponseEntity<Map<String, Object>> uncompleteTask(@PathVariable Long id) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
+        Task task = taskService.setCompleted(id, userId, false);
+        User user = userService.getOrCreateUser(userId);
+        return ResponseEntity.ok(Map.of(
+                "taskId", task.getId(),
+                "completed", false,
+                "xpClaimed", task.isXpClaimed(),
+                "user", Map.of(
+                        "xp", user.getXp(),
+                        "level", user.getLevel(),
+                        "streak", user.getStreak()
+                )
+        ));
     }
 }

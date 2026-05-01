@@ -12,7 +12,6 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Clerk user ID — links task to the logged-in user
     @Column(name = "user_id", nullable = false)
     private String userId;
 
@@ -23,18 +22,20 @@ public class Task {
     @Column
     private String description;
 
-    // "daily" or "weekly"
     @NotNull
     @Column(nullable = false)
     private String type;
 
-    // "weak" or "strong"
     @NotNull
     @Column(nullable = false)
     private String strength;
 
     @Column(nullable = false)
     private boolean completed = false;
+
+    // Once XP is earned from this task it can never be earned again
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean xpClaimed = false;
 
     public Task() {}
 
@@ -45,8 +46,6 @@ public class Task {
         this.type = type;
         this.strength = strength;
     }
-
-    // Getters + Setters
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -68,4 +67,7 @@ public class Task {
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public boolean isXpClaimed() { return xpClaimed; }
+    public void setXpClaimed(boolean xpClaimed) { this.xpClaimed = xpClaimed; }
 }

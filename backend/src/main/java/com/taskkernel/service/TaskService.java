@@ -50,4 +50,31 @@ public class TaskService {
 
         taskRepository.delete(existing);
     }
+
+    public boolean isXpClaimed(Long taskId, String clerkUserId) {
+        Task existing = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+        if (!existing.getUserId().equals(clerkUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        return existing.isXpClaimed();
+    }
+
+    public Task setCompleted(Long taskId, String clerkUserId, boolean completed) {
+        Task existing = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+
+        if (!existing.getUserId().equals(clerkUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        existing.setCompleted(completed);
+
+        // Mark XP as claimed the first time this task is completed — can never be earned again
+        if (completed && !existing.isXpClaimed()) {
+            existing.setXpClaimed(true);
+        }
+
+        return taskRepository.save(existing);
+    }
 }

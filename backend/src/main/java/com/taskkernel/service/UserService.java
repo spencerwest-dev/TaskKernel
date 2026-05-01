@@ -1,5 +1,6 @@
 package com.taskkernel.service;
 
+import com.taskkernel.entity.Task;
 import com.taskkernel.entity.User;
 import com.taskkernel.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,18 @@ public class UserService {
         user.setXp(xp);
         user.setLevel(level);
         user.setStreak(streak);
+        return userRepository.save(user);
+    }
+
+    // Awards XP based on task strength — strong = 20 XP, weak = 10 XP
+    public User addXpForTask(String clerkUserId, Task task) {
+        User user = getOrCreateUser(clerkUserId);
+        int xpGain = "strong".equals(task.getStrength()) ? 20 : 10;
+        int newXp = user.getXp() + xpGain;
+        int newLevel = (newXp / 100) + 1;
+        user.setXp(newXp);
+        user.setLevel(newLevel);
+        user.setStreak(user.getStreak() + 1);
         return userRepository.save(user);
     }
 }
