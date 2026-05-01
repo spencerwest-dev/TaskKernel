@@ -2,12 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ClerkProvider } from "@clerk/clerk-react";
 import LandingPage from "./pages/landing";
 import DashboardPage from "./pages/dashboard";
+import ProtectedRoute from "./pages/dashboard/components/ProtectedRoute";
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
 function App() {
   return (
-    <ClerkProvider 
+    <ClerkProvider
       publishableKey={PUBLISHABLE_KEY}
       appearance={{
         variables: {
@@ -16,13 +17,22 @@ function App() {
           colorText: "#653D15",
           colorInputBackground: "#E9A319",
           borderRadius: "15px",
-        }
+        },
       }}
     >
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
