@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // Rate limiting constants (in milliseconds)
 const TASK_UPDATE_COOLDOWN = 2000; // 2 seconds between task updates
 
 export default function EditTaskModal({ open, task, onClose, onSave }) {
+  const { getToken } = useAuth();
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -24,8 +28,7 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
         strength: task.strength || "weak",
       });
       setError("");
-      
-      // Check if still in cooldown when modal opens
+
       const lastUpdateTime = localStorage.getItem("lastTaskUpdateTime");
       if (lastUpdateTime) {
         const timeSinceLastUpdate = Date.now() - parseInt(lastUpdateTime);
@@ -38,7 +41,6 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
     }
   }, [open, task]);
 
-  // Handle cooldown countdown timer
   useEffect(() => {
     if (!isOnCooldown || cooldownRemaining <= 0) {
       setIsOnCooldown(false);
@@ -63,12 +65,9 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
-    // Prevent submission during cooldown
-    if (isOnCooldown) {
-      return;
-    }
-    
+
+    if (isOnCooldown) return;
+
     if (!form.title.trim()) {
       setError("Title is required.");
       return;
@@ -86,9 +85,13 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
     };
 
     try {
-      const response = await fetch(`http://localhost:8080/tasks/${task.id}`, {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE}/tasks/${task.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -96,7 +99,6 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
         throw new Error("Unable to save task.");
       }
 
-      // Record task update time for rate limiting
       localStorage.setItem("lastTaskUpdateTime", Date.now().toString());
       setIsOnCooldown(true);
       setCooldownRemaining(2);
@@ -189,7 +191,6 @@ export default function EditTaskModal({ open, task, onClose, onSave }) {
               type="submit"
               disabled={isSaving || isOnCooldown}
               className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-indigo-500"
-              title={isOnCooldown ? `Wait ${cooldownRemaining}s before saving again` : isSaving ? "Saving..." : "Save changes"}
             >
               {isOnCooldown ? `Wait ${cooldownRemaining}s` : isSaving ? "Saving…" : "Save Changes"}
             </button>
