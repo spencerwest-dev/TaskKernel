@@ -9,11 +9,9 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final AchievementService achievementService;
 
-    public UserService(UserRepository userRepository, AchievementService achievementService) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.achievementService = achievementService;
     }
 
     public User getOrCreateUser(String clerkUserId) {
@@ -45,11 +43,6 @@ public class UserService {
         user.setXp(newXp);
         user.setLevel(newLevel);
         user.setStreak(user.getStreak() + 1);
-        User savedUser = userRepository.save(user);
-        
-        // Check and unlock achievements
-        achievementService.checkAndUnlockAchievements(savedUser);
-        
-        return savedUser;
+        return userRepository.save(user);
     }
 }
