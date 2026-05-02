@@ -1,17 +1,25 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { SignIn, SignUp } from "@clerk/clerk-react";
 import Navbar from "./Navbar";
 
 function LandingPage() {
   const [mode, setMode] = useState("signup");
+  const location = useLocation();
+  const unauthorized = location.state?.unauthorized;
 
   return (
     <div className="min-h-screen bg-cream font-sans">
       <Navbar onLoginClick={() => setMode("signin")} />
 
+      {unauthorized && (
+        <div className="text-center text-red-600 font-semibold mt-4">
+          Please log in to access the dashboard.
+        </div>
+      )}
+
       <main className="flex flex-col lg:flex-row items-center justify-center min-h-[calc(100vh-80px)] gap-12 lg:gap-0 px-6 py-12 lg:px-12 lg:py-0">
         <div className="w-full max-w-screen-xl flex flex-col lg:flex-row items-center gap-12 lg:gap-0">
-
           {/* Left Column */}
           <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left">
             <h1 className="text-[#653D15] font-bold text-[64px] leading-tight tracking-tight max-w-xl">
@@ -37,7 +45,7 @@ function LandingPage() {
                     elements: {
                       rootBox: "w-full",
                       card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
-                    }
+                    },
                   }}
                 />
               ) : (
@@ -48,13 +56,12 @@ function LandingPage() {
                     elements: {
                       rootBox: "w-full",
                       card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
-                    }
+                    },
                   }}
                 />
               )}
             </div>
           </div>
-
         </div>
       </main>
     </div>
