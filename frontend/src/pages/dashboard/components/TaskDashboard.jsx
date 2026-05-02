@@ -161,16 +161,17 @@ export default function TaskDashboard() {
     }
 
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              completed: !t.completed,
-              xpClaimed: t.xpClaimed || !t.completed,
-            }
-          : t
-      )
-    );
+  prev.map((t) =>
+    t.id === id
+      ? {
+          ...t,
+          completed: !t.completed,
+          completedAt: !t.completed ? new Date().toISOString() : null,
+          xpClaimed: t.xpClaimed || !t.completed,
+        }
+      : t
+  )
+);
   }
 
   const doneToday = tasks.filter((t) => t.completed).length;

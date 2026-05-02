@@ -34,15 +34,11 @@ export default function WeeklyCalendarView({ tasks = [] }) {
   }, [weekStart]);
 
   const completedTasks = tasks
-    .filter((task) => task.completed || task.status === "completed")
-    .map((task, index) => {
-      const fallbackDate = addDays(weekStart, index % 7);
-
-      return {
-        ...task,
-        completedDate: task.completedAt ? new Date(task.completedAt) : fallbackDate,
-      };
-    });
+  .filter((task) => task.completed && task.completedAt)
+  .map((task) => ({
+    ...task,
+    completedDate: new Date(task.completedAt),
+  }));
 
   return (
     <div className="mt-6 rounded-xl bg-white p-5 shadow">

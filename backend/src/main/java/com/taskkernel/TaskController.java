@@ -1,9 +1,9 @@
 package com.taskkernel;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import com.taskkernel.entity.Task;
+import com.taskkernel.util.ClerkAuthUtil;
 
 import java.util.List;
 
@@ -12,38 +12,33 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
-    private final ClerkAuthUtil clerkAuthUtil;
 
-    public TaskController(TaskService taskService, ClerkAuthUtil clerkAuthUtil) {
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
-        this.clerkAuthUtil = clerkAuthUtil;
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> getTasks(@AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+    public ResponseEntity<List<Task>> getTasks() {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.getTasksForUser(userId));
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.createTask(task, userId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id,
-                                           @RequestBody Task task,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+                                           @RequestBody Task task) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.updateTask(id, task, userId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id,
-                                           @AuthenticationPrincipal Jwt jwt) {
-        String userId = clerkAuthUtil.extractUserId(jwt);
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+        String userId = ClerkAuthUtil.getCurrentUserId();
         taskService.deleteTask(id, userId);
         return ResponseEntity.noContent().build();
     }

@@ -1,6 +1,9 @@
 package com.taskkernel;
 
+import com.taskkernel.entity.Task;
+import com.taskkernel.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,20 +25,31 @@ public class TaskService {
     }
 
     public Task updateTask(Long taskId, Task updated, String clerkUserId) {
-        Task existing = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+    Task existing = taskRepository.findById(taskId)
+            .orElseThrow(() -> new RuntimeException("Task not found"));
 
-        if (!existing.getUserId().equals(clerkUserId)) {
-            throw new RuntimeException("Forbidden");
-        }
-
-        existing.setTitle(updated.getTitle());
-        existing.setDescription(updated.getDescription());
-        existing.setType(updated.getType());
-        existing.setStrength(updated.getStrength());
-        existing.setFrequency(updated.getFrequency());
-        return taskRepository.save(existing);
+    if (!existing.getUserId().equals(clerkUserId)) {
+        throw new RuntimeException("Forbidden");
     }
+
+    existing.setTitle(updated.getTitle());
+    existing.setDescription(updated.getDescription());
+    existing.setType(updated.getType());
+    existing.setStrength(updated.getStrength());
+
+    boolean wasCompleted = existing.isCompleted();
+    boolean nowCompleted = updated.isCompleted();
+
+    existing.setCompleted(nowCompleted);
+
+    if (!wasCompleted && nowCompleted) {
+        existing.setCompletedAt(java.time.LocalDateTime.now());
+    } else if (wasCompleted && !nowCompleted) {
+        existing.setCompletedAt(null);
+    }
+
+    return taskRepository.save(existing);
+}
 
     public void deleteTask(Long taskId, String clerkUserId) {
         Task existing = taskRepository.findById(taskId)
