@@ -140,7 +140,7 @@ function UnlockNotification({ achievement, onClose }) {
 }
 
 export default function AchievementTracker({ onAchievementUnlocked }) {
-  const { achievements, loading, error, refetch, addAchievement, deleteAchievement } = useAchievements();
+  const { achievements, loading, error, addAchievement, deleteAchievement } = useAchievements();
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newlyUnlocked, setNewlyUnlocked] = useState(null);
