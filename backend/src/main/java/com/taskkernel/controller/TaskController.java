@@ -1,5 +1,6 @@
 package com.taskkernel.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 import com.taskkernel.entity.Task;
 import com.taskkernel.entity.User;
@@ -65,17 +66,18 @@ public class TaskController {
         User user = wasXpClaimed
                 ? userService.getOrCreateUser(userId)
                 : userService.addXpForTask(userId, task);
-        return ResponseEntity.ok(Map.of(
-                "taskId", task.getId(),
-                "completed", true,
-                "completedAt", task.getCompletedAt(),
-                "xpClaimed", task.isXpClaimed(),
-                "user", Map.of(
-                        "xp", user.getXp(),
-                        "level", user.getLevel(),
-                        "streak", user.getStreak()
-                )
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("taskId", task.getId());
+        response.put("completed", true);
+        response.put("completedAt", task.getCompletedAt() != null ? task.getCompletedAt().toString() : "");
+        response.put("xpClaimed", task.isXpClaimed());
+        response.put("user", Map.of(
+                "xp", user.getXp(),
+                "level", user.getLevel(),
+                "streak", user.getStreak()
         ));
+        return ResponseEntity.ok(response);
     }
 
     // Unmark task complete — never removes XP
@@ -84,16 +86,17 @@ public class TaskController {
         String userId = ClerkAuthUtil.getCurrentUserId();
         Task task = taskService.setCompleted(id, userId, false);
         User user = userService.getOrCreateUser(userId);
-        return ResponseEntity.ok(Map.of(
-                "taskId", task.getId(),
-                "completed", false,
-                "completedAt", task.getCompletedAt(),
-                "xpClaimed", task.isXpClaimed(),
-                "user", Map.of(
-                        "xp", user.getXp(),
-                        "level", user.getLevel(),
-                        "streak", user.getStreak()
-                )
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("taskId", task.getId());
+        response.put("completed", false);
+        response.put("completedAt", task.getCompletedAt() != null ? task.getCompletedAt().toString() : "");
+        response.put("xpClaimed", task.isXpClaimed());
+        response.put("user", Map.of(
+                "xp", user.getXp(),
+                "level", user.getLevel(),
+                "streak", user.getStreak()
         ));
+        return ResponseEntity.ok(response);
     }
 }
