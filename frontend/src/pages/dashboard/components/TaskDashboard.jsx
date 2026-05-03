@@ -6,9 +6,11 @@ import Footer from "./Footer";
 import XpBar from "./XpBar";
 import EditTaskModal from "./EditTaskModal";
 import AddTaskModal from "./AddTaskModal";
+import AchievementTracker from "./AchievementTracker";
 import { addXp, getLevel } from "./xpSystem";
 import { useAuth } from "@clerk/clerk-react";
 import { useTasks } from "../../../hooks/useTasks";
+import { useAchievements } from "../../../hooks/useAchievements";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 import { ReactComponent as XPIcon } from "../../../assets/Icons/xp_icon.svg";
@@ -49,6 +51,7 @@ export default function TaskDashboard() {
   const [error, setError] = useState("");
 
   const { tasks: apiTasks, profile, loading } = useTasks();
+  const { refetch: refetchAchievements } = useAchievements();
 
   useEffect(() => {
     if (apiTasks.length > 0) {
@@ -77,15 +80,18 @@ export default function TaskDashboard() {
   }, [tasks, query, weeklyTab]);
 
   function toggleTask(id, payload) {
+    let xpChanged = false;
     if (payload?.user?.xp != null) {
       setXp(payload.user.xp);
       setXpWarning("");
+      xpChanged = true;
     } else {
       const task = tasks.find((t) => t.id === id);
       if (task && !task.completed && !task.xpClaimed) {
         const result = addXp(xp, task.xp || 10);
         setXp(result.xp);
         setXpWarning("");
+        xpChanged = true;
       } else if (task && !task.completed && task.xpClaimed) {
         setXpWarning("You can't earn XP again from this task.");
       }
@@ -106,6 +112,11 @@ export default function TaskDashboard() {
           : t
       )
     );
+
+    // Refetch achievements if XP was awarded
+    if (xpChanged && nextCompleted) {
+      refetchAchievements();
+    }
   }
 
   function handleEditSave(updatedTask) {
@@ -214,6 +225,9 @@ export default function TaskDashboard() {
                     onDeleteTask={handleDelete}
                     className="min-h-0"
                   />
+                </div>
+                <div className="mt-5">
+                  <AchievementTracker />
                 </div>
                 <WeeklyCalendarView tasks={tasks} />
               </>
