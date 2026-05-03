@@ -14,6 +14,7 @@ import { useAchievements } from "../../../hooks/useAchievements";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
 import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
 import { ReactComponent as XPIcon } from "../../../assets/Icons/xp_icon.svg";
+import WeeklyCalendarView from "./WeeklyCalendarView";
 
 function normalizeTab(tab) {
   return String(tab || "All");
@@ -100,7 +101,14 @@ export default function TaskDashboard() {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
-          ? { ...t, completed: nextCompleted, xpClaimed: t.xpClaimed || nextCompleted }
+          ? {
+              ...t,
+              completed: nextCompleted,
+              completedAt: nextCompleted
+                ? payload?.completedAt ?? t.completedAt ?? new Date().toISOString()
+                : null,
+              xpClaimed: payload?.xpClaimed ?? (t.xpClaimed || nextCompleted),
+            }
           : t
       )
     );
@@ -221,6 +229,7 @@ export default function TaskDashboard() {
                 <div className="mt-5">
                   <AchievementTracker />
                 </div>
+                <WeeklyCalendarView tasks={tasks} />
               </>
             )}
           </DashboardLayout>

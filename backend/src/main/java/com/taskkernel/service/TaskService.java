@@ -5,6 +5,7 @@ import com.taskkernel.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,6 +38,17 @@ public class TaskService {
         existing.setDescription(updated.getDescription());
         existing.setType(updated.getType());
         existing.setStrength(updated.getStrength());
+        boolean wasCompleted = existing.isCompleted();
+        boolean nowCompleted = updated.isCompleted();
+
+        existing.setCompleted(nowCompleted);
+        if (!wasCompleted && nowCompleted) {
+            existing.setCompletedAt(LocalDateTime.now());
+            existing.setXpClaimed(true);
+        } else if (wasCompleted && !nowCompleted) {
+            existing.setCompletedAt(null);
+        }
+
         return taskRepository.save(existing);
     }
 
@@ -68,9 +80,15 @@ public class TaskService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
+        boolean wasCompleted = existing.isCompleted();
         existing.setCompleted(completed);
 
-        // Mark XP as claimed the first time this task is completed — can never be earned again
+        if (completed && !wasCompleted) {
+            existing.setCompletedAt(LocalDateTime.now());
+        } else if (!completed) {
+            existing.setCompletedAt(null);
+        }
+
         if (completed && !existing.isXpClaimed()) {
             existing.setXpClaimed(true);
         }
