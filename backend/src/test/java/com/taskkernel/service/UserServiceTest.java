@@ -30,6 +30,9 @@ public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private AchievementService achievementService;
+
     @InjectMocks
     private UserService userService;
 
