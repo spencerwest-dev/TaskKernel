@@ -3,6 +3,7 @@ package com.taskkernel.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tasks")
@@ -33,7 +34,9 @@ public class Task {
     @Column(nullable = false)
     private boolean completed = false;
 
-    // Once XP is earned from this task it can never be earned again
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean xpClaimed = false;
 
@@ -67,6 +70,9 @@ public class Task {
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
 
     public boolean isXpClaimed() { return xpClaimed; }
     public void setXpClaimed(boolean xpClaimed) { this.xpClaimed = xpClaimed; }

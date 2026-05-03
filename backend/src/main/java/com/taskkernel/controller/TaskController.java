@@ -68,6 +68,7 @@ public class TaskController {
         return ResponseEntity.ok(Map.of(
                 "taskId", task.getId(),
                 "completed", true,
+                "completedAt", task.getCompletedAt(),
                 "xpClaimed", task.isXpClaimed(),
                 "user", Map.of(
                         "xp", user.getXp(),
@@ -86,6 +87,7 @@ public class TaskController {
         return ResponseEntity.ok(Map.of(
                 "taskId", task.getId(),
                 "completed", false,
+                "completedAt", task.getCompletedAt(),
                 "xpClaimed", task.isXpClaimed(),
                 "user", Map.of(
                         "xp", user.getXp(),
