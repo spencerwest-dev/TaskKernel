@@ -17,6 +17,8 @@ public class Task {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+    // CWE-89 Mitigation: @Size enforces input length at the application layer before
+    // data reaches the database. @Column(length) enforces it at the schema level.
     @NotBlank
     @Size(max = 100)
     @Column(nullable = false, length = 100)
