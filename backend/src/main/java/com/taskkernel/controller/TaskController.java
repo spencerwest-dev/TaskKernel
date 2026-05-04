@@ -1,20 +1,36 @@
 package com.taskkernel.controller;
 
-import java.util.HashMap;
-import java.util.Map;
 import com.taskkernel.entity.Task;
 import com.taskkernel.entity.User;
 import com.taskkernel.service.TaskService;
 import com.taskkernel.service.UserService;
 import com.taskkernel.util.ClerkAuthUtil;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * Task HTTP API. Task routes require a verified Clerk JWT (Spring Security).
+ * <p>
+ * <strong>Section 2 — CWE-306 (Janeth Loera): Missing Authentication for Critical Function.</strong>
+ * Completion is a critical state change: it is only exposed on authenticated routes, uses
+ * {@link ClerkAuthUtil#getCurrentUserId()} (never user id from the client body for auth), and
+ * {@link TaskService} enforces task ownership before mutating completion / XP.
+ */
 @RestController
 @RequestMapping("/tasks")
+@Validated
 public class TaskController {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskController.class);
 
     private final TaskService taskService;
     private final UserService userService;
@@ -44,28 +60,31 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id,
+    public ResponseEntity<Task> updateTask(@PathVariable("id") @Positive Long id,
                                            @Valid @RequestBody Task task) {
         String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.updateTask(id, task, userId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable("id") @Positive Long id) {
         String userId = ClerkAuthUtil.getCurrentUserId();
         taskService.deleteTask(id, userId);
         return ResponseEntity.ok(Map.of("message", "deleted"));
     }
 
-    // Mark task complete — awards XP only if not already claimed
     @PostMapping("/{id}/complete")
-    public ResponseEntity<Map<String, Object>> completeTask(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> completeTask(@PathVariable("id") @Positive Long id) {
         String userId = ClerkAuthUtil.getCurrentUserId();
+        log.info("cwe306 task_completion_attempt userId={} taskId={}", userId, id);
+
         boolean wasXpClaimed = taskService.isXpClaimed(id, userId);
         Task task = taskService.setCompleted(id, userId, true);
         User user = wasXpClaimed
                 ? userService.getOrCreateUser(userId)
                 : userService.addXpForTask(userId, task);
+
+        log.info("cwe306 task_completion_success userId={} taskId={} xpAlreadyClaimed={}", userId, id, wasXpClaimed);
 
         Map<String, Object> response = new HashMap<>();
         response.put("taskId", task.getId());
@@ -80,12 +99,15 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
-    // Unmark task complete — never removes XP
     @DeleteMapping("/{id}/complete")
-    public ResponseEntity<Map<String, Object>> uncompleteTask(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> uncompleteTask(@PathVariable("id") @Positive Long id) {
         String userId = ClerkAuthUtil.getCurrentUserId();
+        log.info("cwe306 task_uncomplete_attempt userId={} taskId={}", userId, id);
+
         Task task = taskService.setCompleted(id, userId, false);
         User user = userService.getOrCreateUser(userId);
+
+        log.info("cwe306 task_uncomplete_success userId={} taskId={}", userId, id);
 
         Map<String, Object> response = new HashMap<>();
         response.put("taskId", task.getId());

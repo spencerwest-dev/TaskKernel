@@ -42,10 +42,12 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
         return;
       }
 
+      // CWE-306: critical completion calls must send the Clerk JWT (never omit when token exists).
       const response = await fetch(`${apiBaseUrl}/tasks/${task.id}/complete`, {
         method: nextCompleted ? "POST" : "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
       });
 

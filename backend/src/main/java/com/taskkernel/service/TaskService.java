@@ -22,6 +22,7 @@ public class TaskService {
     }
 
     public Task createTask(Task task, String clerkUserId) {
+        task.setId(null);
         task.setUserId(clerkUserId);
         return taskRepository.save(task);
     }
