@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "tasks")
@@ -13,7 +14,6 @@ public class Task {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Clerk user ID — links task to the logged-in user
     @Column(name = "user_id", nullable = false)
     private String userId;
 
@@ -26,18 +26,22 @@ public class Task {
     @Column(length = 500)
     private String description;
 
-    // "daily" or "weekly"
     @NotNull
     @Column(nullable = false)
     private String type;
 
-    // "weak" or "strong"
     @NotNull
     @Column(nullable = false)
     private String strength;
 
     @Column(nullable = false)
     private boolean completed = false;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean xpClaimed = false;
 
     public Task() {}
 
@@ -48,8 +52,6 @@ public class Task {
         this.type = type;
         this.strength = strength;
     }
-
-    // Getters + Setters
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -71,4 +73,10 @@ public class Task {
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public boolean isXpClaimed() { return xpClaimed; }
+    public void setXpClaimed(boolean xpClaimed) { this.xpClaimed = xpClaimed; }
 }
