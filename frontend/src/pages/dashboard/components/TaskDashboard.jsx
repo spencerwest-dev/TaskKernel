@@ -20,6 +20,8 @@ function normalizeTab(tab) {
   return String(tab || "All");
 }
 
+// CWE-89 Mitigation: Tab values are checked against hardcoded strings only (allowlist).
+// No user-supplied input is passed to the database — filtering is client-side only.
 function matchesTab(task, tab) {
   const t = normalizeTab(tab);
   if (t === "All") return true;
@@ -29,12 +31,20 @@ function matchesTab(task, tab) {
   return true;
 }
 
+// CWE-89 Mitigation: Search filtering runs entirely in JavaScript on already-fetched
+// data. User input never reaches the database or gets concatenated into a SQL query.
 function matchesQuery(task, query) {
-  const q = String(query || "").trim().toLowerCase();
+  const q = String(query || "")
+    .trim()
+    .toLowerCase();
   if (!q) return true;
   return (
-    String(task.title || "").toLowerCase().includes(q) ||
-    String(task.description || "").toLowerCase().includes(q)
+    String(task.title || "")
+      .toLowerCase()
+      .includes(q) ||
+    String(task.description || "")
+      .toLowerCase()
+      .includes(q)
   );
 }
 
@@ -66,6 +76,8 @@ export default function TaskDashboard() {
     }
   }, [profile]);
 
+  // CWE-89 Mitigation: Sort order is validated against four known values (allowlist).
+  // Unrecognized input has no effect and never reaches the database.
   function sortTasks(tasks, order) {
     const sorted = [...tasks];
     if (order === "latest") {
@@ -74,11 +86,11 @@ export default function TaskDashboard() {
       sorted.sort((a, b) => Number(a.id) - Number(b.id));
     } else if (order === "weak") {
       sorted.sort((a, b) =>
-        a.strength === "weak" && b.strength !== "weak" ? -1 : 1
+        a.strength === "weak" && b.strength !== "weak" ? -1 : 1,
       );
     } else if (order === "strong") {
       sorted.sort((a, b) =>
-        a.strength === "strong" && b.strength !== "strong" ? -1 : 1
+        a.strength === "strong" && b.strength !== "strong" ? -1 : 1,
       );
     }
     return sorted;
@@ -90,7 +102,7 @@ export default function TaskDashboard() {
         .filter((t) => t.type === "daily")
         .filter((t) => matchesQuery(t, query))
         .filter((t) => matchesTab(t, dailyTab)),
-      sortOrder
+      sortOrder,
     );
   }, [tasks, query, dailyTab, sortOrder]);
 
@@ -100,7 +112,7 @@ export default function TaskDashboard() {
         .filter((t) => t.type === "weekly")
         .filter((t) => matchesQuery(t, query))
         .filter((t) => matchesTab(t, weeklyTab)),
-      sortOrder
+      sortOrder,
     );
   }, [tasks, query, weeklyTab, sortOrder]);
 
@@ -130,12 +142,14 @@ export default function TaskDashboard() {
               ...t,
               completed: nextCompleted,
               completedAt: nextCompleted
-                ? payload?.completedAt ?? t.completedAt ?? new Date().toISOString()
+                ? (payload?.completedAt ??
+                  t.completedAt ??
+                  new Date().toISOString())
                 : null,
               xpClaimed: payload?.xpClaimed ?? (t.xpClaimed || nextCompleted),
             }
-          : t
-      )
+          : t,
+      ),
     );
 
     // Refetch achievements if XP was awarded
@@ -146,7 +160,7 @@ export default function TaskDashboard() {
 
   function handleEditSave(updatedTask) {
     setTasks((prev) =>
-      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t))
+      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t)),
     );
     setEditingTask(null);
   }
@@ -156,21 +170,26 @@ export default function TaskDashboard() {
   }
 
   const doneToday = tasks.filter((t) => t.completed).length;
-  const displayStreak = profile?.streak ?? tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
+  const displayStreak =
+    profile?.streak ??
+    tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
   const displayLevel = getLevel(xp);
 
   async function handleCreateTask({ title, description, type, strength }) {
     setError("");
     try {
       const token = await getToken();
-      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:8080"}/tasks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://localhost:8080"}/tasks`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ title, description, type, strength }),
         },
-        body: JSON.stringify({ title, description, type, strength }),
-      });
+      );
 
       if (!response.ok) throw new Error("Failed to create task.");
 
@@ -207,26 +226,42 @@ export default function TaskDashboard() {
                   <XpBar xp={xp} />
                   <div className="flex gap-2">
                     <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                      <p className="text-xl font-extrabold leading-none text-[#653d15]">{displayStreak}</p>
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
+                      <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                        {displayStreak}
+                      </p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                        Streak
+                      </p>
                       <StreakIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
                     <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                      <p className="text-xl font-extrabold leading-none text-[#653d15]">{xp}</p>
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Total XP</p>
+                      <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                        {xp}
+                      </p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                        Total XP
+                      </p>
                       <XPIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
                     <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
-                      <p className="text-xl font-extrabold leading-none text-[#653d15]">{doneToday}</p>
-                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Done</p>
+                      <p className="text-xl font-extrabold leading-none text-[#653d15]">
+                        {doneToday}
+                      </p>
+                      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">
+                        Done
+                      </p>
                       <DoneIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
                   </div>
                   {xpWarning && (
-                    <p className="mt-2 text-sm font-medium text-red-600">{xpWarning}</p>
+                    <p className="mt-2 text-sm font-medium text-red-600">
+                      {xpWarning}
+                    </p>
                   )}
                   {error && (
-                    <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+                    <p className="mt-2 text-sm font-medium text-red-600">
+                      {error}
+                    </p>
                   )}
                 </div>
                 <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
