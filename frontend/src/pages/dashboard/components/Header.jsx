@@ -1,4 +1,11 @@
-import React from "react";
+import { useState, useRef, useEffect } from "react";
+
+const SORT_OPTIONS = [
+  { label: "Latest", value: "latest" },
+  { label: "Oldest", value: "oldest" },
+  { label: "Weak First", value: "weak" },
+  { label: "Strong First", value: "strong" },
+];
 
 export default function Header({
   query,
@@ -8,7 +15,22 @@ export default function Header({
   xp = 0,
   level = 1,
   streak = 0,
+  sortOrder,
+  onSortChange,
 }) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <header className="border-b-2 border-[#dbb96a] bg-[#f0ddb8]">
       <div className="mx-auto flex max-w-7xl items-center gap-2.5 px-5 py-4 md:px-7">
@@ -54,26 +76,52 @@ export default function Header({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenFilters}
-          className="hidden items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-2 text-sm font-semibold text-[#7a4d1a] hover:bg-[#f5e9cc] md:inline-flex"
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="h-4 w-4 text-[#9a6530]"
-            fill="none"
+        <div ref={ref} className="relative hidden md:inline-flex">
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((open) => !open)}
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-2 text-sm font-semibold text-[#7a4d1a] hover:bg-[#f5e9cc]"
           >
-            <path
-              d="M4 6h16M7 12h10M10 18h4"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-          Tags / Filters
-        </button>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-4 w-4 text-[#9a6530]"
+              fill="none"
+            >
+              <path
+                d="M4 6h16M7 12h10M10 18h4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            {sortOrder !== "latest" && (
+              <span className="h-2 w-2 rounded-full bg-[#653d15]" />
+            )}
+            Tags / Filters
+          </button>
+          {dropdownOpen && (
+            <div
+              className="absolute z-50 top-full mt-1 right-0 rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] shadow-md min-w-[160px] overflow-hidden"
+            >
+              {SORT_OPTIONS.map(({ label, value }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    onSortChange?.(value);
+                    setDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold text-[#653d15] hover:bg-[#f5e9cc] ${
+                    value === sortOrder ? "font-extrabold" : ""
+                  }`}
+                >
+                  {value === sortOrder ? `✓ ${label}` : label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           type="button"
