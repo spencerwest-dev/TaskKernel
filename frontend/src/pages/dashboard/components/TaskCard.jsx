@@ -20,6 +20,7 @@ function strengthStyles(strength) {
 }
 
 export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
+  // Clerk hook access point: retrieves the session JWT used for authenticated API requests.
   const { getToken } = useAuth();
 
   const styles = strengthStyles(task.strength);
@@ -42,10 +43,11 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
         return;
       }
 
-      // CWE-306: critical completion calls must send the Clerk JWT (never omit when token exists).
+      // Critical function call (CWE-306): POST marks complete, DELETE undoes completion, and JWT is always sent.
       const response = await fetch(`${apiBaseUrl}/tasks/${task.id}/complete`, {
         method: nextCompleted ? "POST" : "DELETE",
         headers: {
+          // CWE-306 enforcement point: attach JWT so only authenticated users can execute completion.
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
@@ -56,10 +58,12 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
       }
 
       const payload = await response.json();
+      // Forward server user stats (xp/level/streak) to parent so header/dashboard totals update immediately.
       onToggle?.(task.id, {
         completed: nextCompleted,
         user: payload?.user,
       });
+    // Fallback path: if token retrieval or API call fails, still toggle locally to keep UI responsive.
     } catch (error) {
       console.error("Task completion update failed:", error);
       onToggle?.(task.id, { completed: nextCompleted });
