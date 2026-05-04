@@ -8,14 +8,43 @@ function AddAchievementModal({ open, onClose, onCreate, isSubmitting }) {
     xpThreshold: 0,
     streakThreshold: 0,
   });
+  const ACHIEVEMENT_CREATION_COOLDOWN = 2000;
+  const [isOnCooldown, setIsOnCooldown] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const handleChange = (field) => (event) => {
     const value = field.includes('Threshold') ? parseInt(event.target.value, 10) || 0 : event.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  useEffect(() => {
+    if (open) {
+      setForm({ name: '', description: '', xpThreshold: 0, streakThreshold: 0 });
+      const lastCreationTime = localStorage.getItem("lastAchievementCreationTime");
+      if (lastCreationTime) {
+        const timeSinceLastCreation = Date.now() - parseInt(lastCreationTime);
+        if (timeSinceLastCreation < ACHIEVEMENT_CREATION_COOLDOWN) {
+          const remaining = Math.ceil((ACHIEVEMENT_CREATION_COOLDOWN - timeSinceLastCreation) / 1000);
+          setIsOnCooldown(true);
+          setCooldownRemaining(remaining);
+        }
+      }
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!isOnCooldown || cooldownRemaining <= 0) {
+      setIsOnCooldown(false);
+      setCooldownRemaining(0);
+      return;
+    }
+    const timer = setTimeout(() => setCooldownRemaining((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [isOnCooldown, cooldownRemaining]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isOnCooldown) return;
     if (!form.name.trim()) return;
 
     await onCreate?.({
@@ -24,6 +53,9 @@ function AddAchievementModal({ open, onClose, onCreate, isSubmitting }) {
       xpThreshold: form.xpThreshold,
       streakThreshold: form.streakThreshold,
     });
+    localStorage.setItem("lastAchievementCreationTime", Date.now().toString());
+    setIsOnCooldown(true);
+    setCooldownRemaining(2);
     setForm({ name: '', description: '', xpThreshold: 0, streakThreshold: 0 });
   };
 
@@ -108,10 +140,10 @@ function AddAchievementModal({ open, onClose, onCreate, isSubmitting }) {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isOnCooldown}
               className="rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50"
             >
-              {isSubmitting ? 'Creating...' : 'Create Achievement'}
+              {isOnCooldown ? `Wait ${cooldownRemaining}s` : isSubmitting ? 'Creating...' : 'Create Achievement'}
             </button>
           </div>
         </form>
