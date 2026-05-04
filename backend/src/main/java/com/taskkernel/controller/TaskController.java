@@ -37,14 +37,14 @@ public ResponseEntity<Map<String, Object>> getTasks() {
 }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.createTask(task, userId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id,
-                                           @RequestBody Task task) {
+                                           @Valid @RequestBody Task task) {
         String userId = ClerkAuthUtil.getCurrentUserId();
         return ResponseEntity.ok(taskService.updateTask(id, task, userId));
     }

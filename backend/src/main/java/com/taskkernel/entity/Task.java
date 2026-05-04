@@ -3,6 +3,7 @@ package com.taskkernel.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "tasks")
@@ -17,10 +18,12 @@ public class Task {
     private String userId;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 100)
+    @Column(nullable = false, length = 100)
     private String title;
 
-    @Column
+    @Size(max = 500)
+    @Column(length = 500)
     private String description;
 
     // "daily" or "weekly"
