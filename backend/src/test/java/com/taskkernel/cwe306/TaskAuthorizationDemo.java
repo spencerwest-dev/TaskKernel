@@ -12,6 +12,7 @@ import java.util.Map;
  */
 public final class TaskAuthorizationDemo {
 
+    // Simulated task-ownership datastore (taskId -> ownerUserId); production uses a real PostgreSQL-backed table.
     private static final Map<Integer, Integer> TASK_OWNERS = new HashMap<>();
 
     static {
@@ -21,6 +22,7 @@ public final class TaskAuthorizationDemo {
 
     private TaskAuthorizationDemo() {}
 
+    // Simulates JWT validation; in production the backend verifies Clerk session tokens and resolves the caller's user ID.
     /** Simulated JWT authentication — {@code null} means not authenticated. */
     public static Integer authenticateUser(String jwtToken) {
         if ("valid_jwt_token".equals(jwtToken)) {
@@ -29,23 +31,29 @@ public final class TaskAuthorizationDemo {
         if ("valid_jwt_user_1002".equals(jwtToken)) {
             return 1002;
         }
+        // CWE-306 fix: unauthenticated/invalid-token callers are rejected before reaching any critical function.
         return null;
     }
 
+    // Authorization gate: authenticated users can complete only tasks they personally own.
     public static boolean canCompleteTask(Integer authenticatedUserId, int taskId) {
         if (authenticatedUserId == null) {
             return false;
         }
         Integer owner = TASK_OWNERS.get(taskId);
+        // Ownership enforcement: caller userId must match the stored owner userId for this task.
         return owner != null && owner.equals(authenticatedUserId);
     }
 
+    // Critical function gate: combines authentication + authorization before allowing task completion (CWE-306 requirement).
     public static String tryMarkComplete(String jwtToken, int taskId) {
         Integer authenticatedUserId = authenticateUser(jwtToken);
         if (authenticatedUserId == null) {
+            // Blocks unauthenticated callers from invoking the critical completion action.
             return "Access denied: Authentication or authorization failed.";
         }
         if (!canCompleteTask(authenticatedUserId, taskId)) {
+            // Blocks authenticated users who are not the owner of the target task.
             return "Access denied: Authentication or authorization failed.";
         }
         return "Task completed successfully.";

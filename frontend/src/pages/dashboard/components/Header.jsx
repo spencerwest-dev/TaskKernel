@@ -12,6 +12,7 @@ export default function Header({
   onQueryChange,
   onOpenFilters,
   onAddTask,
+  // Live stats props from TaskDashboard; refresh after each complete/un-complete API response.
   xp = 0,
   level = 1,
   streak = 0,
@@ -61,15 +62,19 @@ export default function Header({
           />
         </div>
 
+        {/* Demo note: this stats row uses lg:flex, so it is visible only on large screens. */}
         <div className="hidden items-center gap-2 lg:flex">
+          {/* Level stat box: updates in real time when tasks are completed or un-completed. */}
           <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{level}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Level</p>
           </div>
+          {/* XP stat box: updates in real time when tasks are completed or un-completed. */}
           <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{xp}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">XP</p>
           </div>
+          {/* Streak stat box: updates in real time when tasks are completed or un-completed. */}
           <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{streak}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
