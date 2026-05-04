@@ -41,6 +41,7 @@ function matchesQuery(task, query) {
 export default function TaskDashboard() {
   const { getToken } = useAuth();
   const [query, setQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("latest");
   const [tasks, setTasks] = useState([]);
   const [dailyTab, setDailyTab] = useState("All");
   const [weeklyTab, setWeeklyTab] = useState("All");
@@ -65,19 +66,43 @@ export default function TaskDashboard() {
     }
   }, [profile]);
 
+  function sortTasks(tasks, order) {
+    const sorted = [...tasks];
+    if (order === "latest") {
+      sorted.sort((a, b) => Number(b.id) - Number(a.id));
+    } else if (order === "oldest") {
+      sorted.sort((a, b) => Number(a.id) - Number(b.id));
+    } else if (order === "weak") {
+      sorted.sort((a, b) =>
+        a.strength === "weak" && b.strength !== "weak" ? -1 : 1
+      );
+    } else if (order === "strong") {
+      sorted.sort((a, b) =>
+        a.strength === "strong" && b.strength !== "strong" ? -1 : 1
+      );
+    }
+    return sorted;
+  }
+
   const dailyTasks = useMemo(() => {
-    return tasks
-      .filter((t) => t.type === "daily")
-      .filter((t) => matchesQuery(t, query))
-      .filter((t) => matchesTab(t, dailyTab));
-  }, [tasks, query, dailyTab]);
+    return sortTasks(
+      tasks
+        .filter((t) => t.type === "daily")
+        .filter((t) => matchesQuery(t, query))
+        .filter((t) => matchesTab(t, dailyTab)),
+      sortOrder
+    );
+  }, [tasks, query, dailyTab, sortOrder]);
 
   const weeklyTasks = useMemo(() => {
-    return tasks
-      .filter((t) => t.type === "weekly")
-      .filter((t) => matchesQuery(t, query))
-      .filter((t) => matchesTab(t, weeklyTab));
-  }, [tasks, query, weeklyTab]);
+    return sortTasks(
+      tasks
+        .filter((t) => t.type === "weekly")
+        .filter((t) => matchesQuery(t, query))
+        .filter((t) => matchesTab(t, weeklyTab)),
+      sortOrder
+    );
+  }, [tasks, query, weeklyTab, sortOrder]);
 
   function toggleTask(id, payload) {
     let xpChanged = false;
@@ -169,6 +194,8 @@ export default function TaskDashboard() {
             xp={xp}
             level={displayLevel}
             streak={displayStreak}
+            sortOrder={sortOrder}
+            onSortChange={setSortOrder}
           >
             {loading ? (
               <div className="flex items-center justify-center py-20 text-sm font-semibold text-[#9a6530]">

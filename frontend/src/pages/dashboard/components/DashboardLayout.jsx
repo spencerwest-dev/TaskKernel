@@ -9,6 +9,8 @@ export default function DashboardLayout({
   xp,
   level,
   streak,
+  sortOrder,
+  onSortChange,
   children,
 }) {
   return (
@@ -22,6 +24,8 @@ export default function DashboardLayout({
           xp={xp}
           level={level}
           streak={streak}
+          sortOrder={sortOrder}
+          onSortChange={onSortChange}
         />
 
         <main className="flex-1 min-h-0">

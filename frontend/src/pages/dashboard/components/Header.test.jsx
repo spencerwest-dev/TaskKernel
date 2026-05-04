@@ -22,15 +22,24 @@ describe("Header", () => {
     expect(mockOnQueryChange).toHaveBeenCalled();
   });
 
-  test("calls onOpenFilters when filter button is clicked", async () => {
-    const mockOnOpenFilters = jest.fn();
+  test("opens sort dropdown and calls onSortChange when an option is selected", async () => {
+    const mockOnSortChange = jest.fn();
 
-    render(<Header query="" onOpenFilters={mockOnOpenFilters} />);
+    render(
+      <Header
+        query=""
+        sortOrder="latest"
+        onSortChange={mockOnSortChange}
+        onAddTask={() => {}}
+      />
+    );
 
     const button = screen.getByRole("button", { name: /tags \/ filters/i });
     await userEvent.click(button);
 
-    expect(mockOnOpenFilters).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole("button", { name: /^oldest$/i }));
+
+    expect(mockOnSortChange).toHaveBeenCalledWith("oldest");
   });
 
   test("calls onAddTask when add task button is clicked", async () => {
