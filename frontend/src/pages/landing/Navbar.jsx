@@ -36,7 +36,7 @@ export default function Navbar({ onLoginClick }) {
       <button
         type="button"
         onClick={onLoginClick}
-        className="justify-self-end w-[166px] bg-[#653D15] text-white rounded-[15px] px-6 py-2 font-normal hover:opacity-90 transition-opacity"
+        className="justify-self-end w-[166px] bg-[#653D15] text-white rounded-[25px] px-6 py-2 font-normal hover:opacity-90 transition-opacity"
       >
         Login
       </button>
