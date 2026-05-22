@@ -24,6 +24,9 @@ public class TaskService {
     public Task createTask(Task task, String clerkUserId) {
         task.setId(null);
         task.setUserId(clerkUserId);
+        task.setCompleted(false);
+        task.setCompletedAt(null);
+        task.setXpClaimed(false);
         return taskRepository.save(task);
     }
 
@@ -37,18 +40,9 @@ public class TaskService {
 
         existing.setTitle(updated.getTitle());
         existing.setDescription(updated.getDescription());
-        existing.setType(updated.getType());
-        existing.setStrength(updated.getStrength());
-        boolean wasCompleted = existing.isCompleted();
-        boolean nowCompleted = updated.isCompleted();
-
-        existing.setCompleted(nowCompleted);
-        if (!wasCompleted && nowCompleted) {
-            existing.setCompletedAt(LocalDateTime.now());
-            existing.setXpClaimed(true);
-        } else if (wasCompleted && !nowCompleted) {
-            existing.setCompletedAt(null);
-        }
+        existing.setRecurrence(updated.getRecurrence());
+        existing.setDifficulty(updated.getDifficulty());
+        existing.setTag(updated.getTag());
 
         return taskRepository.save(existing);
     }

@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/react";
 import LandingPage from "./pages/landing";
 import DashboardPage from "./pages/dashboard";
+import AchievementsPage from "./pages/achievements";
 import ProtectedRoute from "./pages/dashboard/components/ProtectedRoute";
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
@@ -29,6 +30,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <AchievementsPage />
               </ProtectedRoute>
             }
           />

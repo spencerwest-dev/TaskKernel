@@ -25,4 +25,11 @@ public class UserController {
         User user = userService.getOrCreateUser(clerkUserId);
         return ResponseEntity.ok(user);
     }
+
+    @PostMapping("/reset-demo")
+    public ResponseEntity<User> resetDemo() {
+        String clerkUserId = ClerkAuthUtil.getCurrentUserId();
+        User user = userService.resetDemoState(clerkUserId);
+        return ResponseEntity.ok(user);
+    }
 }

@@ -1,5 +1,6 @@
 package com.taskkernel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,6 +10,7 @@ public class User {
     // Clerk user ID (e.g. "user_2abc123xyz") — this IS the primary key, no auto-gen needed
     @Id
     @Column(name = "id", nullable = false)
+    @JsonIgnore
     private String id;
 
     @Column(nullable = false)

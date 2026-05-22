@@ -1,5 +1,7 @@
 package com.taskkernel.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -11,19 +13,26 @@ public class Achievement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String userId;
+    @Column(length = 40)
+    @JsonIgnore
+    private String code;
 
     @Column(nullable = false)
-    private String name;
+    @JsonIgnore
+    private String userId;
+
+    @Column(name = "name", nullable = false)
+    private String title;
 
     @Column(nullable = true)
     private String description;
 
-    @Column(nullable = false)
-    private int xpThreshold = 0;
+    @Column(name = "xp_threshold", nullable = false)
+    @JsonProperty("xp_reward")
+    private int xpReward = 0;
 
     @Column(nullable = false)
+    @JsonIgnore
     private int streakThreshold = 0;
 
     @Column(nullable = false)
@@ -37,12 +46,13 @@ public class Achievement {
 
     public Achievement() {}
 
-    public Achievement(String userId, String name, String description, int xpThreshold, int streakThreshold) {
+    public Achievement(String userId, String code, String title, String description, int xpReward) {
         this.userId = userId;
-        this.name = name;
+        this.code = code;
+        this.title = title;
         this.description = description;
-        this.xpThreshold = xpThreshold;
-        this.streakThreshold = streakThreshold;
+        this.xpReward = xpReward;
+        this.streakThreshold = 0;
         this.unlocked = false;
     }
 
@@ -51,17 +61,20 @@ public class Achievement {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public int getXpThreshold() { return xpThreshold; }
-    public void setXpThreshold(int xpThreshold) { this.xpThreshold = xpThreshold; }
+    public int getXpReward() { return xpReward; }
+    public void setXpReward(int xpReward) { this.xpReward = xpReward; }
 
     public int getStreakThreshold() { return streakThreshold; }
     public void setStreakThreshold(int streakThreshold) { this.streakThreshold = streakThreshold; }

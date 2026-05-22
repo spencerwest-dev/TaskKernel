@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import TaskCard from "./TaskCard";
 
 const mockGetToken = jest.fn();
-jest.mock("@clerk/clerk-react", () => ({
+jest.mock("@clerk/react", () => ({
   __esModule: true,
   useAuth: () => ({
     getToken: mockGetToken,

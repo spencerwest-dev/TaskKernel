@@ -14,7 +14,7 @@ export default function DashboardLayout({
   children,
 }) {
   return (
-    <div className="h-full bg-[#fdf6e3] text-[#653d15]">
+    <div className="h-full bg-[#f0ddb8] text-[#653d15]">
       <div className="flex h-full flex-col">
         <Header
           query={query}
