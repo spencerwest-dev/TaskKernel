@@ -1,5 +1,6 @@
 import React from "react";
-import { useClerk } from "@clerk/clerk-react";
+import { useClerk } from "@clerk/react";
+import { NavLink } from "react-router-dom";
 
 function Navbar() {
   const { signOut } = useClerk();
@@ -19,13 +20,35 @@ function Navbar() {
             TaskKernel
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => signOut({ redirectUrl: "/" })}
-          className="rounded-full border border-[#e9a319]/35 bg-[#e9a319]/20 px-4 py-1.5 text-xs font-semibold text-[#f5e0b0] transition hover:bg-[#e9a319]/35 hover:text-[#fdf6e3]"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-2">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                isActive ? "bg-[#e9a319] text-[#653d15]" : "text-[#f5e0b0] hover:bg-[#e9a319]/20"
+              }`
+            }
+          >
+            Dashboard
+          </NavLink>
+          <NavLink
+            to="/achievements"
+            className={({ isActive }) =>
+              `rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                isActive ? "bg-[#e9a319] text-[#653d15]" : "text-[#f5e0b0] hover:bg-[#e9a319]/20"
+              }`
+            }
+          >
+            Achievements
+          </NavLink>
+          <button
+            type="button"
+            onClick={() => signOut({ redirectUrl: "/" })}
+            className="rounded-full border border-[#e9a319]/35 bg-[#e9a319]/20 px-4 py-1.5 text-xs font-semibold text-[#f5e0b0] transition hover:bg-[#e9a319]/35 hover:text-[#fdf6e3]"
+          >
+            Log out
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -7,8 +7,8 @@ import XpBar from "./XpBar";
 import EditTaskModal from "./EditTaskModal";
 import AddTaskModal from "./AddTaskModal";
 import AchievementTracker from "./AchievementTracker";
-import { addXp, getLevel } from "./xpSystem";
-import { useAuth } from "@clerk/clerk-react";
+import { getLevel } from "./xpSystem";
+import { useAuth } from "@clerk/react";
 import { useTasks } from "../../../hooks/useTasks";
 import { useAchievements } from "../../../hooks/useAchievements";
 import { ReactComponent as DoneIcon } from "../../../assets/Icons/done_icon.svg";
@@ -16,35 +16,58 @@ import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.
 import { ReactComponent as XPIcon } from "../../../assets/Icons/xp_icon.svg";
 import WeeklyCalendarView from "./WeeklyCalendarView";
 
-function normalizeTab(tab) {
-  return String(tab || "All");
-}
+const DIFFICULTY_ORDER = {
+  EASY: 1,
+  MEDIUM: 2,
+  HARD: 3,
+  EPIC: 4,
+};
 
-// CWE-89 Mitigation: Tab values are checked against hardcoded strings only (allowlist).
-// No user-supplied input is passed to the database — filtering is client-side only.
-function matchesTab(task, tab) {
-  const t = normalizeTab(tab);
-  if (t === "All") return true;
-  if (t === "Completed") return Boolean(task.completed);
-  if (t === "Weak") return task.strength === "weak" && !task.completed;
-  if (t === "Strong") return task.strength === "strong" && !task.completed;
-  return true;
-}
-
-// CWE-89 Mitigation: Search filtering runs entirely in JavaScript on already-fetched
-// data. User input never reaches the database or gets concatenated into a SQL query.
 function matchesQuery(task, query) {
-  const q = String(query || "")
-    .trim()
-    .toLowerCase();
+  const q = String(query || "").trim().toLowerCase();
   if (!q) return true;
   return (
-    String(task.title || "")
-      .toLowerCase()
-      .includes(q) ||
-    String(task.description || "")
-      .toLowerCase()
-      .includes(q)
+    String(task.title || "").toLowerCase().includes(q) ||
+    String(task.tag || "").toLowerCase().includes(q)
+  );
+}
+
+function sortTasks(tasks, order) {
+  const sorted = [...tasks];
+  if (order === "latest") {
+    sorted.sort((a, b) => Number(b.id) - Number(a.id));
+  } else if (order === "oldest") {
+    sorted.sort((a, b) => Number(a.id) - Number(b.id));
+  } else if (order === "hardest") {
+    sorted.sort(
+      (a, b) =>
+        (DIFFICULTY_ORDER[b.difficulty] || 0) -
+        (DIFFICULTY_ORDER[a.difficulty] || 0)
+    );
+  } else if (order === "easiest") {
+    sorted.sort(
+      (a, b) =>
+        (DIFFICULTY_ORDER[a.difficulty] || 0) -
+        (DIFFICULTY_ORDER[b.difficulty] || 0)
+    );
+  }
+  return sorted;
+}
+
+function UnlockNotification({ achievement, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3200);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  if (!achievement) return null;
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 rounded-xl border-2 border-[#dbb96a] bg-[#e9a319] p-4 shadow-lg">
+      <p className="text-sm font-extrabold text-[#653d15]">Achievement Unlocked</p>
+      <p className="mt-1 text-sm font-semibold text-[#653d15]">{achievement.title}</p>
+      <p className="mt-1 text-xs font-bold text-[#7a4d1a]">+{achievement.xp_reward ?? achievement.xpReward} XP</p>
+    </div>
   );
 }
 
@@ -53,21 +76,22 @@ export default function TaskDashboard() {
   const [query, setQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("latest");
   const [tasks, setTasks] = useState([]);
-  const [dailyTab, setDailyTab] = useState("All");
-  const [weeklyTab, setWeeklyTab] = useState("All");
   const [xp, setXp] = useState(0);
-  const [xpWarning, setXpWarning] = useState("");
   const [editingTask, setEditingTask] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [newlyUnlocked, setNewlyUnlocked] = useState(null);
 
   const { tasks: apiTasks, profile, loading } = useTasks();
-  const { refetch: refetchAchievements } = useAchievements();
+  const {
+    achievements,
+    loading: achievementsLoading,
+    error: achievementsError,
+    refetch: refetchAchievements,
+  } = useAchievements();
 
   useEffect(() => {
-    if (apiTasks.length > 0) {
-      setTasks(apiTasks);
-    }
+    setTasks(apiTasks);
   }, [apiTasks]);
 
   useEffect(() => {
@@ -76,106 +100,59 @@ export default function TaskDashboard() {
     }
   }, [profile]);
 
-  // CWE-89 Mitigation: Sort order is validated against four known values (allowlist).
-  // Unrecognized input has no effect and never reaches the database.
-  function sortTasks(tasks, order) {
-    const sorted = [...tasks];
-    if (order === "latest") {
-      sorted.sort((a, b) => Number(b.id) - Number(a.id));
-    } else if (order === "oldest") {
-      sorted.sort((a, b) => Number(a.id) - Number(b.id));
-    } else if (order === "weak") {
-      sorted.sort((a, b) =>
-        a.strength === "weak" && b.strength !== "weak" ? -1 : 1,
-      );
-    } else if (order === "strong") {
-      sorted.sort((a, b) =>
-        a.strength === "strong" && b.strength !== "strong" ? -1 : 1,
-      );
-    }
-    return sorted;
-  }
-
-  const dailyTasks = useMemo(() => {
+  const filteredTasks = useMemo(() => {
     return sortTasks(
-      tasks
-        .filter((t) => t.type === "daily")
-        .filter((t) => matchesQuery(t, query))
-        .filter((t) => matchesTab(t, dailyTab)),
-      sortOrder,
+      tasks.filter((task) => matchesQuery(task, query)),
+      sortOrder
     );
-  }, [tasks, query, dailyTab, sortOrder]);
-
-  const weeklyTasks = useMemo(() => {
-    return sortTasks(
-      tasks
-        .filter((t) => t.type === "weekly")
-        .filter((t) => matchesQuery(t, query))
-        .filter((t) => matchesTab(t, weeklyTab)),
-      sortOrder,
-    );
-  }, [tasks, query, weeklyTab, sortOrder]);
+  }, [tasks, query, sortOrder]);
 
   function toggleTask(id, payload) {
-    let xpChanged = false;
     if (payload?.user?.xp != null) {
       setXp(payload.user.xp);
-      setXpWarning("");
-      xpChanged = true;
-    } else {
-      const task = tasks.find((t) => t.id === id);
-      if (task && !task.completed && !task.xpClaimed) {
-        const result = addXp(xp, task.xp || 10);
-        setXp(result.xp);
-        setXpWarning("");
-        xpChanged = true;
-      } else if (task && !task.completed && task.xpClaimed) {
-        setXpWarning("You can't earn XP again from this task.");
-      }
+    }
+
+    const unlocked = payload?.unlockedAchievements ?? [];
+    if (unlocked.length > 0) {
+      setNewlyUnlocked(unlocked[0]);
+      refetchAchievements();
     }
 
     const nextCompleted = payload?.completed ?? true;
     setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id
+      prev.map((task) =>
+        task.id === id
           ? {
-              ...t,
+              ...task,
               completed: nextCompleted,
               completedAt: nextCompleted
-                ? (payload?.completedAt ??
-                  t.completedAt ??
-                  new Date().toISOString())
+                ? payload?.completedAt ?? task.completedAt ?? new Date().toISOString()
                 : null,
-              xpClaimed: payload?.xpClaimed ?? (t.xpClaimed || nextCompleted),
+              xpClaimed: payload?.xpClaimed ?? (task.xpClaimed || nextCompleted),
             }
-          : t,
-      ),
+          : task
+      )
     );
-
-    // Refetch achievements if XP was awarded
-    if (xpChanged && nextCompleted) {
-      refetchAchievements();
-    }
   }
 
   function handleEditSave(updatedTask) {
     setTasks((prev) =>
-      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t)),
+      prev.map((task) => (task.id === updatedTask.id ? { ...task, ...updatedTask } : task))
     );
     setEditingTask(null);
   }
 
   function handleDelete(id) {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks((prev) => prev.filter((task) => task.id !== id));
   }
 
-  const doneToday = tasks.filter((t) => t.completed).length;
+  const doneToday = tasks.filter((task) => task.completed).length;
   const displayStreak =
     profile?.streak ??
-    tasks.reduce((max, t) => Math.max(max, t.streak || 0), 0);
+    tasks.reduce((max, task) => Math.max(max, task.streak || 0), 0);
   const displayLevel = getLevel(xp);
 
-  async function handleCreateTask({ title, description, type, strength }) {
+  async function handleCreateTask({ title, difficulty, recurrence, tag }) {
     setError("");
     try {
       const token = await getToken();
@@ -187,8 +164,8 @@ export default function TaskDashboard() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ title, description, type, strength }),
-        },
+          body: JSON.stringify({ title, difficulty, recurrence, tag }),
+        }
       );
 
       if (!response.ok) throw new Error("Failed to create task.");
@@ -201,7 +178,7 @@ export default function TaskDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#fdf6e3]">
+    <div className="flex min-h-screen flex-col bg-[#f0ddb8]">
       <Navbar />
       <div className="flex-1 min-h-0">
         <div className="h-full">
@@ -218,14 +195,14 @@ export default function TaskDashboard() {
           >
             {loading ? (
               <div className="flex items-center justify-center py-20 text-sm font-semibold text-[#9a6530]">
-                Loading your tasks…
+                Loading your tasks...
               </div>
             ) : (
               <>
                 <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
                   <XpBar xp={xp} />
                   <div className="flex gap-2">
-                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f0ddb8] px-4 py-2.5 text-center">
                       <p className="text-xl font-extrabold leading-none text-[#653d15]">
                         {displayStreak}
                       </p>
@@ -234,7 +211,7 @@ export default function TaskDashboard() {
                       </p>
                       <StreakIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
-                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f0ddb8] px-4 py-2.5 text-center">
                       <p className="text-xl font-extrabold leading-none text-[#653d15]">
                         {xp}
                       </p>
@@ -243,7 +220,7 @@ export default function TaskDashboard() {
                       </p>
                       <XPIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
-                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-4 py-2.5 text-center">
+                    <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f0ddb8] px-4 py-2.5 text-center">
                       <p className="text-xl font-extrabold leading-none text-[#653d15]">
                         {doneToday}
                       </p>
@@ -253,43 +230,29 @@ export default function TaskDashboard() {
                       <DoneIcon className="mx-auto mt-2 h-5 w-5 text-[#9a6530]" />
                     </div>
                   </div>
-                  {xpWarning && (
-                    <p className="mt-2 text-sm font-medium text-red-600">
-                      {xpWarning}
-                    </p>
-                  )}
                   {error && (
-                    <p className="mt-2 text-sm font-medium text-red-600">
+                    <p className="mt-2 text-sm font-medium text-rose-700">
                       {error}
                     </p>
                   )}
                 </div>
-                <div className="grid h-full min-h-0 grid-cols-1 gap-5 lg:grid-cols-2">
-                  <TaskColumn
-                    title="Daily Tasks"
-                    subtitle="Small wins, big streaks."
-                    tasks={dailyTasks}
-                    activeTab={dailyTab}
-                    onTabChange={setDailyTab}
-                    onToggleTask={toggleTask}
-                    onEditTask={setEditingTask}
-                    onDeleteTask={handleDelete}
-                    className="min-h-0"
-                  />
-                  <TaskColumn
-                    title="Weekly Tasks"
-                    subtitle="Build skills over time."
-                    tasks={weeklyTasks}
-                    activeTab={weeklyTab}
-                    onTabChange={setWeeklyTab}
-                    onToggleTask={toggleTask}
-                    onEditTask={setEditingTask}
-                    onDeleteTask={handleDelete}
-                    className="min-h-0"
-                  />
-                </div>
+
+                <TaskColumn
+                  title="Tasks"
+                  subtitle="Daily, weekly, and one-time tasks."
+                  tasks={filteredTasks}
+                  onToggleTask={toggleTask}
+                  onEditTask={setEditingTask}
+                  onDeleteTask={handleDelete}
+                  className="min-h-[420px]"
+                />
+
                 <div className="mt-5">
-                  <AchievementTracker />
+                  <AchievementTracker
+                    achievements={achievements}
+                    loading={achievementsLoading}
+                    error={achievementsError}
+                  />
                 </div>
                 <WeeklyCalendarView tasks={tasks} />
               </>
@@ -310,6 +273,11 @@ export default function TaskDashboard() {
         task={editingTask}
         onClose={() => setEditingTask(null)}
         onSave={handleEditSave}
+      />
+
+      <UnlockNotification
+        achievement={newlyUnlocked}
+        onClose={() => setNewlyUnlocked(null)}
       />
     </div>
   );

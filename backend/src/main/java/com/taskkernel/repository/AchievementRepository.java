@@ -9,4 +9,6 @@ import java.util.List;
 public interface AchievementRepository extends JpaRepository<Achievement, Long> {
     List<Achievement> findByUserId(String userId);
     List<Achievement> findByUserIdAndUnlocked(String userId, boolean unlocked);
+    boolean existsByUserIdAndCode(String userId, String code);
+    void deleteByUserId(String userId);
 }

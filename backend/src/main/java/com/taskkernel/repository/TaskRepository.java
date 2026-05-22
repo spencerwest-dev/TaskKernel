@@ -13,4 +13,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // into raw SQL, preventing SQL injection.   
     List<Task> findByUserId(String userId);
     void deleteByIdAndUserId(Long id, String userId);
+    void deleteByUserId(String userId);
 }

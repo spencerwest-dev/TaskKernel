@@ -2,7 +2,10 @@ package com.taskkernel.service;
 
 import com.taskkernel.entity.Task;
 import com.taskkernel.entity.User;
+import com.taskkernel.repository.AchievementRepository;
+import com.taskkernel.repository.TaskRepository;
 import com.taskkernel.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -10,10 +13,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final AchievementService achievementService;
+    private final TaskRepository taskRepository;
+    private final AchievementRepository achievementRepository;
 
-    public UserService(UserRepository userRepository, AchievementService achievementService) {
+    public UserService(UserRepository userRepository,
+                       AchievementService achievementService,
+                       TaskRepository taskRepository,
+                       AchievementRepository achievementRepository) {
         this.userRepository = userRepository;
         this.achievementService = achievementService;
+        this.taskRepository = taskRepository;
+        this.achievementRepository = achievementRepository;
     }
 
     public User getOrCreateUser(String clerkUserId) {
@@ -36,20 +46,41 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    // Awards XP based on task strength — strong = 20 XP, weak = 10 XP
     public User addXpForTask(String clerkUserId, Task task) {
         User user = getOrCreateUser(clerkUserId);
-        int xpGain = "strong".equals(task.getStrength()) ? 20 : 10;
-        int newXp = user.getXp() + xpGain;
-        int newLevel = (newXp / 100) + 1;
+        int newXp = user.getXp() + xpForDifficulty(task.getDifficulty());
         user.setXp(newXp);
-        user.setLevel(newLevel);
+        user.setLevel(levelForXp(newXp));
         user.setStreak(user.getStreak() + 1);
-        User savedUser = userRepository.save(user);
-        
-        // Check and unlock achievements
-        achievementService.checkAndUnlockAchievements(savedUser);
-        
-        return savedUser;
+        return userRepository.save(user);
+    }
+
+    public AchievementService.UnlockResult unlockAchievementsForTask(User user, Task task) {
+        return achievementService.checkAndUnlockAchievements(user, task);
+    }
+
+    @Transactional
+    public User resetDemoState(String clerkUserId) {
+        taskRepository.deleteByUserId(clerkUserId);
+        achievementRepository.deleteByUserId(clerkUserId);
+
+        User user = getOrCreateUser(clerkUserId);
+        user.setXp(0);
+        user.setLevel(1);
+        user.setStreak(0);
+        return userRepository.save(user);
+    }
+
+    private int xpForDifficulty(String difficulty) {
+        return switch (String.valueOf(difficulty)) {
+            case "MEDIUM" -> 25;
+            case "HARD" -> 50;
+            case "EPIC" -> 100;
+            default -> 10;
+        };
+    }
+
+    private int levelForXp(int xp) {
+        return (xp / 100) + 1;
     }
 }

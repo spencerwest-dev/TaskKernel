@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@clerk/react";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
@@ -15,7 +15,8 @@ const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8080";
  *   refetch  — call this to manually re-fetch
  */
 export function useTasks() {
-  const { getToken } = useAuth();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
   const [tasks, setTasks] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,14 +24,25 @@ export function useTasks() {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
+    getTokenRef.current = getToken;
+  }, [getToken]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function fetchTasks() {
+      if (!isLoaded || !isSignedIn) {
+        setTasks([]);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
       try {
-        const token = await getToken();
+        const token = await getTokenRef.current();
         const response = await fetch(`${API_BASE}/tasks`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,7 +76,7 @@ export function useTasks() {
     return () => {
       cancelled = true;
     };
-  }, [getToken, tick]);
+  }, [isLoaded, isSignedIn, tick]);
 
   function refetch() {
     setTick((n) => n + 1);

@@ -80,9 +80,16 @@ public class TaskController {
 
         boolean wasXpClaimed = taskService.isXpClaimed(id, userId);
         Task task = taskService.setCompleted(id, userId, true);
-        User user = wasXpClaimed
-                ? userService.getOrCreateUser(userId)
-                : userService.addXpForTask(userId, task);
+        User user;
+        List<?> unlockedAchievements = List.of();
+        if (wasXpClaimed) {
+            user = userService.getOrCreateUser(userId);
+        } else {
+            user = userService.addXpForTask(userId, task);
+            var unlockResult = userService.unlockAchievementsForTask(user, task);
+            user = unlockResult.user();
+            unlockedAchievements = unlockResult.unlockedAchievements();
+        }
 
         log.info("cwe306 task_completion_success userId={} taskId={} xpAlreadyClaimed={}", userId, id, wasXpClaimed);
 
@@ -96,6 +103,7 @@ public class TaskController {
                 "level", user.getLevel(),
                 "streak", user.getStreak()
         ));
+        response.put("unlockedAchievements", unlockedAchievements);
         return ResponseEntity.ok(response);
     }
 

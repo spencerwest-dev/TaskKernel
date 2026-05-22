@@ -1,12 +1,17 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { Navigate, useLocation } from "react-router-dom";
+import { SignIn, SignUp, useUser } from "@clerk/react";
 import Navbar from "./Navbar";
 
 function LandingPage() {
   const [mode, setMode] = useState("signup");
   const location = useLocation();
+  const { isLoaded, isSignedIn } = useUser();
   const unauthorized = location.state?.unauthorized;
+
+  if (isLoaded && isSignedIn) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="min-h-screen bg-cream font-sans">
@@ -37,28 +42,34 @@ function LandingPage() {
           {/* Right Column */}
           <div className="w-full lg:w-1/2 flex items-center justify-center">
             <div className="w-full max-w-[550px] flex flex-col items-center">
-              {mode === "signup" ? (
-                <SignUp
-                  routing="virtual"
-                  afterSignUpUrl="/dashboard"
-                  appearance={{
-                    elements: {
-                      rootBox: "w-full",
-                      card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
-                    },
-                  }}
-                />
-              ) : (
-                <SignIn
-                  routing="virtual"
-                  afterSignInUrl="/dashboard"
-                  appearance={{
-                    elements: {
-                      rootBox: "w-full",
-                      card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
-                    },
-                  }}
-                />
+              {!isLoaded ? (
+                <div className="w-full rounded-2xl border border-[#dbb96a] bg-[#fdf6e3] p-8 text-center font-semibold text-[#653d15]">
+                  Loading...
+                </div>
+              ) : mode === "signup" ? (
+                  <SignUp
+                    routing="virtual"
+                    fallbackRedirectUrl="/dashboard"
+                    forceRedirectUrl="/dashboard"
+                    appearance={{
+                      elements: {
+                        rootBox: "w-full",
+                        card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
+                      },
+                    }}
+                  />
+                ) : (
+                  <SignIn
+                    routing="virtual"
+                    fallbackRedirectUrl="/dashboard"
+                    forceRedirectUrl="/dashboard"
+                    appearance={{
+                      elements: {
+                        rootBox: "w-full",
+                        card: "w-full shadow-none border border-[#dbb96a] bg-[#fdf6e3] rounded-2xl",
+                      },
+                    }}
+                  />
               )}
             </div>
           </div>

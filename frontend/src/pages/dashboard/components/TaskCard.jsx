@@ -1,32 +1,32 @@
 import React, { useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
-import { ReactComponent as StreakIcon } from "../../../assets/Icons/streak_icon.svg";
+import { useAuth } from "@clerk/react";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-function strengthStyles(strength) {
-  if (strength === "weak") {
-    return {
-      button: "bg-[#e9a319] text-[#653d15]",
-      chip: "bg-[#e9a319] text-[#653d15]",
-    };
-  }
-  return {
-    button: "bg-[#653d15] text-[#fdf6e3]",
-    chip: "bg-[#653d15] text-[#fdf6e3]",
-  };
-}
+const DIFFICULTY_META = {
+  EASY: { label: "Easy", xp: 10, chip: "bg-[#e9a319] text-[#653d15]" },
+  MEDIUM: { label: "Medium", xp: 25, chip: "bg-[#dbb96a] text-[#653d15]" },
+  HARD: { label: "Hard", xp: 50, chip: "bg-[#653d15] text-[#fdf6e3]" },
+  EPIC: { label: "Epic", xp: 100, chip: "bg-[#4a2c0e] text-[#fdf6e3]" },
+};
+
+const RECURRENCE_LABELS = {
+  DAILY: "Daily",
+  WEEKLY: "Weekly",
+  ONE_TIME: "One-time",
+};
 
 export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
-  // Clerk hook access point: retrieves the session JWT used for authenticated API requests.
   const { getToken } = useAuth();
-
-  const styles = strengthStyles(task.strength);
   const completed = Boolean(task.completed);
+  const difficulty = task.difficulty || "EASY";
+  const difficultyMeta = DIFFICULTY_META[difficulty] || DIFFICULTY_META.EASY;
+  const recurrence = task.recurrence || "DAILY";
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState("");
 
   const apiBaseUrl =
     process.env.REACT_APP_API_URL?.replace(/\/$/, "") || "http://localhost:8080";
@@ -36,18 +36,16 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
     const nextCompleted = !completed;
 
     setIsSaving(true);
+    setError("");
     try {
       const token = await getToken?.();
       if (!token) {
-        onToggle?.(task.id, { completed: nextCompleted });
-        return;
+        throw new Error("Sign in again to update this task.");
       }
 
-      // Critical function call (CWE-306): POST marks complete, DELETE undoes completion, and JWT is always sent.
       const response = await fetch(`${apiBaseUrl}/tasks/${task.id}/complete`, {
         method: nextCompleted ? "POST" : "DELETE",
         headers: {
-          // CWE-306 enforcement point: attach JWT so only authenticated users can execute completion.
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
@@ -58,15 +56,16 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
       }
 
       const payload = await response.json();
-      // Forward server user stats (xp/level/streak) to parent so header/dashboard totals update immediately.
       onToggle?.(task.id, {
         completed: nextCompleted,
+        completedAt: payload?.completedAt,
+        xpClaimed: payload?.xpClaimed,
         user: payload?.user,
+        unlockedAchievements: payload?.unlockedAchievements ?? [],
       });
-    // Fallback path: if token retrieval or API call fails, still toggle locally to keep UI responsive.
     } catch (error) {
       console.error("Task completion update failed:", error);
-      onToggle?.(task.id, { completed: nextCompleted });
+      setError(error.message || "Unable to update task.");
     } finally {
       setIsSaving(false);
     }
@@ -75,8 +74,13 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
   async function handleDelete() {
     if (isDeleting) return;
     setIsDeleting(true);
+    setError("");
     try {
       const token = await getToken?.();
+      if (!token) {
+        throw new Error("Sign in again to delete this task.");
+      }
+
       const response = await fetch(`${apiBaseUrl}/tasks/${task.id}`, {
         method: "DELETE",
         headers: {
@@ -91,8 +95,7 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
       onDelete?.(task.id);
     } catch (error) {
       console.error("Task delete failed:", error);
-      // Still remove locally if API fails
-      onDelete?.(task.id);
+      setError(error.message || "Unable to delete task.");
     } finally {
       setIsDeleting(false);
     }
@@ -101,9 +104,9 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
   return (
     <div
       className={cn(
-        "group flex items-start gap-3 rounded-[14px] border-2 border-[#dbb96a] bg-[#fdf6e3] p-3 transition",
+        "group flex items-start gap-3 rounded-[14px] border-2 border-[#dbb96a] bg-[#f5e9cc] p-3 transition",
         "hover:-translate-y-0.5 hover:border-[#e9a319] hover:shadow-[0_3px_12px_rgba(101,61,21,0.1)]",
-        completed && "bg-[#f5e9cc] opacity-60"
+        completed && "bg-[#f0ddb8] opacity-70"
       )}
     >
       <button
@@ -113,7 +116,7 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
         aria-label={completed ? "Mark incomplete" : "Mark complete"}
         className={cn(
           "mt-0.5 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full text-base font-extrabold shadow-sm transition hover:scale-105",
-          completed ? "bg-[#27ae60] text-white" : styles.button,
+          completed ? "bg-[#27ae60] text-[#fdf6e3]" : "bg-[#653d15] text-[#fdf6e3]",
           isSaving && "cursor-not-allowed opacity-70"
         )}
       >
@@ -122,69 +125,60 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }) {
             <path d="M20 7 10 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (
-          <span className="text-lg font-bold leading-none">+</span>
+          <span className="h-3 w-3 rounded-full border-2 border-current" />
         )}
       </button>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p
-              className={cn(
-                "truncate text-sm font-semibold",
-                completed ? "line-through text-[#9a6530]" : "text-[#653d15]"
-              )}
-              title={task.title}
-            >
-              {task.title}
-            </p>
-            {task.description ? (
-              <p className="mt-0.5 line-clamp-2 text-xs text-[#9a6530]">{task.description}</p>
-            ) : null}
-          </div>
-
-          <div className="flex flex-none flex-col items-end gap-1 text-xs font-bold text-[#9a6530]">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#f5e9cc] px-2 py-0.5">
-              <StreakIcon className="h-4 w-4 text-[#9a6530]" />
-              <span>{task.streak ?? 0}</span>
-            </span>
-            <span className="rounded-full bg-[#f5e9cc] px-2 py-0.5">{task.frequency}</span>
-          </div>
+          <p
+            className={cn(
+              "min-w-0 truncate text-sm font-semibold",
+              completed ? "line-through text-[#9a6530]" : "text-[#653d15]"
+            )}
+            title={task.title}
+          >
+            {task.title}
+          </p>
+          <span className="flex-none rounded-full bg-[#f0ddb8] px-2.5 py-0.5 text-[10px] font-bold uppercase text-[#7a4d1a]">
+            {RECURRENCE_LABELS[recurrence] || recurrence}
+          </span>
         </div>
 
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", styles.chip)}>
-              {task.strength === "weak" ? "Weak" : "Strong"}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", difficultyMeta.chip)}>
+            {difficultyMeta.label} · {difficultyMeta.xp} XP
+          </span>
+          {task.tag ? (
+            <span className="rounded-full border border-[#dbb96a] bg-[#f5e9cc] px-2.5 py-0.5 text-[10px] font-bold text-[#7a4d1a]">
+              {task.tag}
             </span>
-            {task.xp ? (
-              <span className="rounded-full bg-[#dbb96a] px-2.5 py-0.5 text-[10px] font-bold text-[#653d15]">
-                +{task.xp} XP
-              </span>
-            ) : null}
-          </div>
-
-          {/* Edit + Delete buttons — visible on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              type="button"
-              onClick={() => onEdit?.(task)}
-              aria-label="Edit task"
-              className="rounded-full bg-[#f5e9cc] px-2 py-1 text-[10px] font-semibold text-[#653d15] hover:bg-[#dbb96a] transition"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              aria-label="Delete task"
-              className="rounded-full bg-[#f5e9cc] px-2 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-100 transition disabled:opacity-50"
-            >
-              {isDeleting ? "..." : "Delete"}
-            </button>
-          </div>
+          ) : null}
         </div>
+
+        <div className="mt-2 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={() => onEdit?.(task)}
+            aria-label="Edit task"
+            className="rounded-full bg-[#f0ddb8] px-2 py-1 text-[10px] font-semibold text-[#653d15] transition hover:bg-[#dbb96a]"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            aria-label="Delete task"
+            className="rounded-full bg-[#f0ddb8] px-2 py-1 text-[10px] font-semibold text-rose-700 transition hover:bg-[#dbb96a] disabled:opacity-50"
+          >
+            {isDeleting ? "..." : "Delete"}
+          </button>
+        </div>
+
+        {error ? (
+          <p className="mt-2 text-xs font-semibold text-rose-700">{error}</p>
+        ) : null}
       </div>
     </div>
   );

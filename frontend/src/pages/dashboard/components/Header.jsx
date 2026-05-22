@@ -3,8 +3,8 @@ import { useState, useRef, useEffect } from "react";
 const SORT_OPTIONS = [
   { label: "Latest", value: "latest" },
   { label: "Oldest", value: "oldest" },
-  { label: "Weak First", value: "weak" },
-  { label: "Strong First", value: "strong" },
+  { label: "Hardest First", value: "hardest" },
+  { label: "Easiest First", value: "easiest" },
 ];
 
 export default function Header({
@@ -35,7 +35,7 @@ export default function Header({
   return (
     <header className="border-b-2 border-[#dbb96a] bg-[#f0ddb8]">
       <div className="mx-auto flex max-w-7xl items-center gap-2.5 px-5 py-4 md:px-7">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#f0ddb8] px-4 py-2 transition focus-within:border-[#e9a319] focus-within:bg-[#fdf6e3]">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#f0ddb8] px-4 py-2 transition focus-within:border-[#e9a319] focus-within:bg-[#f5e9cc]">
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
@@ -65,17 +65,17 @@ export default function Header({
         {/* Demo note: this stats row uses lg:flex, so it is visible only on large screens. */}
         <div className="hidden items-center gap-2 lg:flex">
           {/* Level stat box: updates in real time when tasks are completed or un-completed. */}
-          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f5e9cc] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{level}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Level</p>
           </div>
           {/* XP stat box: updates in real time when tasks are completed or un-completed. */}
-          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f5e9cc] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{xp}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">XP</p>
           </div>
           {/* Streak stat box: updates in real time when tasks are completed or un-completed. */}
-          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-1.5 text-center">
+          <div className="rounded-xl border-2 border-[#dbb96a] bg-[#f5e9cc] px-3 py-1.5 text-center">
             <p className="text-sm font-extrabold leading-none text-[#653d15]">{streak}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#9a6530]">Streak</p>
           </div>
@@ -85,7 +85,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => setDropdownOpen((open) => !open)}
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#fdf6e3] px-3 py-2 text-sm font-semibold text-[#7a4d1a] hover:bg-[#f5e9cc]"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#dbb96a] bg-[#f5e9cc] px-3 py-2 text-sm font-semibold text-[#7a4d1a] hover:bg-[#f0ddb8]"
           >
             <svg
               aria-hidden="true"
@@ -107,7 +107,7 @@ export default function Header({
           </button>
           {dropdownOpen && (
             <div
-              className="absolute z-50 top-full mt-1 right-0 rounded-xl border-2 border-[#dbb96a] bg-[#fdf6e3] shadow-md min-w-[160px] overflow-hidden"
+              className="absolute z-50 top-full mt-1 right-0 rounded-xl border-2 border-[#dbb96a] bg-[#f5e9cc] shadow-md min-w-[160px] overflow-hidden"
             >
               {SORT_OPTIONS.map(({ label, value }) => (
                 <button
